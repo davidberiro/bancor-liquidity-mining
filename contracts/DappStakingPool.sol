@@ -1,11 +1,10 @@
 //SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.0;
+pragma solidity ^0.6.12;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/ILiquidityProtection.sol";
-//import "./interfaces/ILiquidityProtectionStore.sol";
 
 import "hardhat/console.sol";
 
@@ -41,14 +40,12 @@ contract DappStakingPool is OwnableUpgradeable {
 
     function initialize(
         address _liquidityProtection,
-        //address _liquidityProtectionStore,
         address _dappBntPoolAnchor,
         address _dappToken,
         address _bntToken
     ) external initializer {
         __Ownable_init(); 
         liquidityProtection = ILiquidityProtection(_liquidityProtection);
-        //liquidityProtectionStore = ILiquidityProtectionStore(_liquidityProtectionStore);
         dappBntPoolAnchor = _dappBntPoolAnchor;
         dappToken = IERC20(_dappToken);
         bntToken = IERC20(_bntToken);

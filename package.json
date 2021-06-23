@@ -9,7 +9,8 @@
     "hardhat": "^2.3.0"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.1.0",
-    "@openzeppelin/contracts-upgradeable": "^4.1.0"
+    "@openzeppelin/contracts": "^3.3.0",
+    "@openzeppelin/contracts-upgradeable": "^3.3.0",
+    "hardhat-abi-exporter": "^2.2.1"
   }
 }
