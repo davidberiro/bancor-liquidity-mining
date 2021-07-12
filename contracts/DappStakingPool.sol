@@ -82,6 +82,14 @@ contract DappStakingPool is OwnableUpgradeable {
         if (userInfo.amount > 0) {
             uint256 pending = userInfo.amount.mul(accDappPerShare).div(1e12).sub(userInfo.rewardDebt);
             userInfo.pending = userInfo.pending.add(pending);
+        } else {
+            uint positionId = liquidityProtection.addLiquidity(dappBntPoolAnchor, address(dappToken), amount);
+            (,,, uint256 lpAmount,,,,) = liquidityProtectionStore.protectedLiquidity(positionId);
+            totalLpStaked = totalLpStaked.add(lpAmount);
+            userInfo.positionId = positionId;
+            userInfo.amount = lpAmount;
+            userInfo.rewardDebt = lpAmount.mul(accDappPerShare).div(1e12);
+            return;
         }
         (uint targetAmount, uint baseAmount, uint networkAmount) = liquidityProtection.removeLiquidityReturn(userInfo.positionId, 1000000, block.timestamp);
         (,,, uint256 prevLpAmount,,,,) = liquidityProtectionStore.protectedLiquidity(userInfo.positionId);
