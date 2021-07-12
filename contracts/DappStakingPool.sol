@@ -41,12 +41,14 @@ contract DappStakingPool is OwnableUpgradeable {
 
     function initialize(
         address _liquidityProtection,
+        address _liquidityProtectionStore,
         address _dappBntPoolAnchor,
         address _dappToken,
         address _bntToken
     ) external initializer {
         __Ownable_init(); 
         liquidityProtection = ILiquidityProtection(_liquidityProtection);
+        liquidityProtectionStore = ILiquidityProtectionStore(_liquidityProtectionStore);
         dappBntPoolAnchor = _dappBntPoolAnchor;
         dappToken = IERC20(_dappToken);
         bntToken = IERC20(_bntToken);
