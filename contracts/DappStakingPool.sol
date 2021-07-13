@@ -187,11 +187,17 @@ contract DappStakingPool is OwnableUpgradeable {
         }
     }
 
-    function notifyDappRewardsTransferred() public {
-
+    // TODO should this be permissioned, or should we expect anyone
+    // whos function to call these atomically?
+    function notifyDappRewardsTransferred(uint256 _amount) public {
+       uint256 currSupply = dappToken.balanceOf(address(this)); 
+       require(dappRewardsSupply.add(dappILSupply).add(_amount) <= currSupply, "Dapp rewards");
+       dappRewardsSupply = dappRewardsSupply.add(_amount);
     }
 
-    function notifyDappILProtectionTransferred() public {
-
+    function notifyDappILProtectionTransferred(uint256 _amount) public {
+       uint256 currSupply = dappToken.balanceOf(address(this)); 
+       require(dappRewardsSupply.add(dappILSupply).add(_amount) <= currSupply, "Dapp IL");
+       dappILSupply = dappILSupply.add(_amount);
     }
 }
