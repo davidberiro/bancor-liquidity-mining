@@ -17,7 +17,6 @@ contract DappStakingPool is OwnableUpgradeable {
         uint pending;
         uint rewardDebt; // Reward debt. See explanation below.
         uint positionId;
-        //uint[] positionIds;
     }
 
     ILiquidityProtection public liquidityProtection;
@@ -71,10 +70,30 @@ contract DappStakingPool is OwnableUpgradeable {
         _;
     }
 
+    // if there is no more bnt for single sided staking, users can still
+    // stake dapp-bnt tokens
     function stakeDappBnt(uint amount) public updateRewards {
+        IERC20(dappBntPoolAnchor).transferFrom(msg.sender, address(this), amount);
+        UserStakeInfo storage userInfo = userStakeInfo[msg.sender];
+
+        if (userInfo.amount > 0) {
+            uint256 pending = userInfo.amount.mul(accDappPerShare).div(1e12).sub(userInfo.rewardDebt);
+            userInfo.pending = userInfo.pending.add(pending);
+        }
+        totalLpStaked = totalLpStaked.add(amount);
+        userInfo.amount = userInfo.amount.add(amount);
+        userInfo.rewardDebt = userInfo.amount.mul(accDappPerShare).div(1e12);
     }
 
     function unstakeDappBnt(uint amount) public updateRewards {
+        harvest();
+        UserStakeInfo storage userInfo = userStakeInfo[msg.sender];
+
+        totalLpStaked = totalLpStaked.sub(amount);
+        // this line validates user balance
+        userInfo.amount = userInfo.amount.sub(amount);
+        userInfo.rewardDebt = userInfo.amount.mul(accDappPerShare).div(1e12);
+        IERC20(dappBntPoolAnchor).transfer(msg.sender, amount);
     }
 
     function stakeDapp(uint amount) public updateRewards {
@@ -117,36 +136,25 @@ contract DappStakingPool is OwnableUpgradeable {
         (,,, uint256 postLpAmount,,,,) = liquidityProtectionStore.protectedLiquidity(positionId);
         totalLpStaked = totalLpStaked.add(postLpAmount.sub(prevLpAmount));
         userInfo.positionId = positionId;
-        userInfo.amount = postLpAmount;
+        userInfo.amount = userInfo.amount.add(postLpAmount.sub(prevLpAmount));
         userInfo.rewardDebt = userInfo.amount.mul(accDappPerShare).div(1e12);
     }
 
     // portion of total staked, PPM
     function unstakeDapp(uint32 portion) public updateRewards {
+        harvest();
         UserStakeInfo storage userInfo = userStakeInfo[msg.sender];
 
+        (,,, uint256 prevLpAmount,,,,) = liquidityProtectionStore.protectedLiquidity(userInfo.positionId);
         (uint targetAmount, uint baseAmount, uint networkAmount) = liquidityProtection.removeLiquidityReturn(userInfo.positionId, portion, block.timestamp);
         liquidityProtection.removeLiquidity(userInfo.positionId, portion);
         uint diff = targetAmount.sub(baseAmount);
         (,,, uint256 newLpAmount,,,,) = liquidityProtectionStore.protectedLiquidity(userInfo.positionId);
 
-        uint256 pendingReward = userInfo.pending.add(userInfo.amount.mul(accDappPerShare).div(1e12).sub(userInfo.rewardDebt));
-        if(pendingReward > 0) {
-            if (dappRewardsSupply > pendingReward) {
-                dappToken.transfer(msg.sender, pendingReward);
-                dappRewardsSupply = dappRewardsSupply.sub(pendingReward);
-                userInfo.pending = 0;
-                userInfo.rewardDebt = (newLpAmount).mul(accDappPerShare).div(1e12);
-            } else {
-                dappToken.transfer(msg.sender, dappRewardsSupply);
-                dappRewardsSupply = 0;
-                userInfo.pending = userInfo.pending = pendingReward.sub(dappRewardsSupply);
-                userInfo.rewardDebt = (newLpAmount).mul(accDappPerShare).div(1e12);
-            }
-        }
 
         totalLpStaked = totalLpStaked.sub(userInfo.amount.sub(newLpAmount));
-        userInfo.amount = newLpAmount;
+        userInfo.amount = userInfo.amount.sub(prevLpAmount.sub(newLpAmount));
+        userInfo.rewardDebt = userInfo.amount.mul(accDappPerShare).div(1e12);
 
         if (diff > 0) {
             if (dappILSupply >= diff) {
@@ -159,17 +167,31 @@ contract DappStakingPool is OwnableUpgradeable {
                 bntToken.transfer(msg.sender, networkAmount);
             }
         }
-
     }
 
     function harvest() public updateRewards {
         UserStakeInfo storage userInfo = userStakeInfo[msg.sender];
         uint256 pendingReward = userInfo.pending.add(userInfo.amount.mul(accDappPerShare).div(1e12).sub(userInfo.rewardDebt));
-        if(pendingReward > 0 && dappRewardsSupply > pendingReward) {
-            dappToken.transfer(msg.sender, pendingReward);
-            dappRewardsSupply = dappRewardsSupply.sub(pendingReward);
-            userInfo.pending = 0;
-            userInfo.rewardDebt = userInfo.amount.mul(accDappPerShare).div(1e12);
+        if(pendingReward > 0) {
+            if (dappRewardsSupply > pendingReward) {
+                dappToken.transfer(msg.sender, pendingReward);
+                dappRewardsSupply = dappRewardsSupply.sub(pendingReward);
+                userInfo.pending = 0;
+                userInfo.rewardDebt = userInfo.amount.mul(accDappPerShare).div(1e12);
+            } else {
+                dappToken.transfer(msg.sender, dappRewardsSupply);
+                dappRewardsSupply = 0;
+                userInfo.pending = pendingReward.sub(dappRewardsSupply);
+                userInfo.rewardDebt = userInfo.amount.mul(accDappPerShare).div(1e12);
+            }
         }
+    }
+
+    function notifyDappRewardsTransferred() public {
+
+    }
+
+    function notifyDappILProtectionTransferred() public {
+
     }
 }
