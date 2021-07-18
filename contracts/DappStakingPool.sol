@@ -14,6 +14,7 @@ contract DappStakingPool is OwnableUpgradeable {
 
     struct UserStakeInfo {
         uint amount;     // How many tokens the user has provided.
+        uint lpAmount;
         uint pending;
         uint rewardDebt; // Reward debt. See explanation below.
         uint positionId;
@@ -61,18 +62,21 @@ contract DappStakingPool is OwnableUpgradeable {
         }
         if (totalLpStaked == 0) {
             lastRewardBlock = block.number;
+            _;
             return;
         }
         uint multiplier = (block.number).sub(lastRewardBlock);
         uint dappReward = multiplier.mul(dappPerBlock);
         accDappPerShare = accDappPerShare.add(dappReward.mul(1e12).div(totalLpStaked));
         lastRewardBlock = block.number;
+        console.log("updated rewards");
         _;
     }
 
     // if there is no more bnt for single sided staking, users can still
     // stake dapp-bnt tokens
     function stakeDappBnt(uint amount) public updateRewards {
+        console.log("confirmed stakedappbnt");
         IERC20(dappBntPoolAnchor).transferFrom(msg.sender, address(this), amount);
         UserStakeInfo storage userInfo = userStakeInfo[msg.sender];
 
@@ -82,6 +86,7 @@ contract DappStakingPool is OwnableUpgradeable {
         }
         totalLpStaked = totalLpStaked.add(amount);
         userInfo.amount = userInfo.amount.add(amount);
+        userInfo.lpAmount = userInfo.lpAmount.add(amount);
         userInfo.rewardDebt = userInfo.amount.mul(accDappPerShare).div(1e12);
     }
 
@@ -92,11 +97,13 @@ contract DappStakingPool is OwnableUpgradeable {
         totalLpStaked = totalLpStaked.sub(amount);
         // this line validates user balance
         userInfo.amount = userInfo.amount.sub(amount);
+        userInfo.lpAmount = userInfo.lpAmount.sub(amount);
         userInfo.rewardDebt = userInfo.amount.mul(accDappPerShare).div(1e12);
         IERC20(dappBntPoolAnchor).transfer(msg.sender, amount);
     }
 
     function stakeDapp(uint amount) public updateRewards {
+        console.log("confirmed stakedapp");
         dappToken.transferFrom(msg.sender, address(this), amount);
         UserStakeInfo storage userInfo = userStakeInfo[msg.sender];
 
@@ -104,12 +111,15 @@ contract DappStakingPool is OwnableUpgradeable {
             uint256 pending = userInfo.amount.mul(accDappPerShare).div(1e12).sub(userInfo.rewardDebt);
             userInfo.pending = userInfo.pending.add(pending);
         } else {
+            console.log("here");
             uint positionId = liquidityProtection.addLiquidity(dappBntPoolAnchor, address(dappToken), amount);
+            console.log("here");
             (,,, uint256 lpAmount,,,,) = liquidityProtectionStore.protectedLiquidity(positionId);
             totalLpStaked = totalLpStaked.add(lpAmount);
             userInfo.positionId = positionId;
             userInfo.amount = lpAmount;
             userInfo.rewardDebt = lpAmount.mul(accDappPerShare).div(1e12);
+            console.log("here");
             return;
         }
         (uint targetAmount, uint baseAmount, uint networkAmount) = liquidityProtection.removeLiquidityReturn(userInfo.positionId, 1000000, block.timestamp);
