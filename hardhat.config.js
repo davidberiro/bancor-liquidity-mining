@@ -1,28 +1,47 @@
 require("@nomiclabs/hardhat-waffle");
+require("@nomiclabs/hardhat-ethers");
 require("hardhat-abi-exporter");
-
-// You need to export an object to set up your config
-// Go to https://hardhat.org/config/ to learn more
+require("hardhat-gas-reporter");
+const config = require("./.config.json");
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
-  networks: {
-    local: {
-      url: "http://localhost:8545",
-      timeout: 100000
-    }
-  },
   solidity: {
     compilers: [
       {
         version: "0.6.12",
-      }
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 2000
+          }
+        }
+      },
     ]
+  }, 
+  defaultNetwork: "hardhat",
+  networks: {
+    hardhat: {
+      forking: {
+        blockNumber: 12792847,
+        url: `https://eth-mainnet.alchemyapi.io/v2/${config.alchemyKey}`
+      },
+      blockGasLimit: 12e6
+    },
+  },
+  gasReporter: {
+    currency: "USD",
+    coinmarketcap: config.coinmarketcapKey,
+    showTimeSpent: true,
+  },
+  mocha: {
+    timeout: 120000,
+    retries: 0,
+    bail: true,
   },
   abiExporter: {
     flat: true
   }
 };
-

@@ -60,6 +60,7 @@ describe("Liquidity mining", function() {
     dappTokenContract = await dappTokenFactory.deploy();
     await dappTokenContract.deployed();
     await dappTokenContract.mint(addr1.address, ethers.utils.parseEther("100000000"));
+    await dappTokenContract.mint(addr2.address, ethers.utils.parseEther("100000000"));
 
     const tx = await converterDeployerContract.deployConverter(
       [dappTokenContract.address, bntAddress],
@@ -77,7 +78,6 @@ describe("Liquidity mining", function() {
 
     dappBntTokenContract = await dappTokenFactory.attach(dappBntAnchor);
     const bntToken = await dappTokenFactory.attach(bntAddress);
-    //console.log((await bntToken.balanceOf(addr1.address)).toString());
     await bancorNetworkContract.convertByPath(
       [bancorEthAddress, ethBntAddress, bntAddress],
       ethers.utils.parseEther("1000"),
@@ -89,18 +89,16 @@ describe("Liquidity mining", function() {
         value: ethers.utils.parseEther("1000")
       }
     );
-    //console.log((await bntToken.balanceOf(addr1.address)).toString());
 
-    //console.log((await dappBntTokenContract.balanceOf(addr1.address)).toString());
-    await dappTokenContract.approve(converterAddress, ethers.utils.parseEther("100000000"));
-    await bntToken.approve(converterAddress, ethers.utils.parseEther("100000000"));
+    await dappTokenContract.approve(converterAddress, ethers.utils.parseEther("10000000000"));
+    await bntToken.approve(converterAddress, ethers.utils.parseEther("10000000000"));
     await dappConverterContract.addLiquidity(
       [dappTokenContract.address, bntAddress],
-      [ethers.utils.parseEther("1000000"), ethers.utils.parseEther("15000")],
+      [ethers.utils.parseEther("100000"), ethers.utils.parseEther("15000")],
       '1'
     );
-    //console.log((await dappBntTokenContract.balanceOf(addr1.address)).toString());
 
+    const blockNumber = await ethers.provider.getBlockNumber();
     dappStakingPoolContract = await dappStakingPoolFactory.deploy();
     await dappStakingPoolContract.deployed();
     await dappStakingPoolContract.initialize(
@@ -108,30 +106,51 @@ describe("Liquidity mining", function() {
       liquidityProtectionStoreContractAddress,
       dappBntAnchor,
       dappTokenContract.address,
-      bntAddress
+      bntAddress,
+      blockNumber
     );
 
-    await dappTokenContract.approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
-    await dappBntTokenContract.approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
+    await dappTokenContract.connect(addr2).approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
+    await dappBntTokenContract.connect(addr2).approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
+    await dappBntTokenContract.transfer(addr2.address, ethers.utils.parseEther("10"));
   });
 
-  it("Should allow staking", async function() {
+  it("Should allow funding dapp rewards and IL", async function() {
+    const prevDappSupply = await dappTokenContract.balanceOf(dappStakingPoolContract.address);
+    const prevDappILSupply = await dappStakingPoolContract.dappILSupply();
+    const prevDappRewardsSupply = await dappStakingPoolContract.dappRewardsSupply();
+    expect(prevDappSupply.toString()).to.equal('0');
+    expect(prevDappILSupply.toString()).to.equal('0');
+    expect(prevDappRewardsSupply.toString()).to.equal('0');
+    await dappTokenContract.approve(dappStakingPoolContract.address, ethers.utils.parseEther("100000000"));
+    await dappStakingPoolContract.fund(ethers.utils.parseEther("100000"), ethers.utils.parseEther("100000"));
+    const postDappSupply = await dappTokenContract.balanceOf(dappStakingPoolContract.address);
+    const postDappILSupply = await dappStakingPoolContract.dappILSupply();
+    const postDappRewardsSupply = await dappStakingPoolContract.dappRewardsSupply();
+    expect(postDappSupply).to.equal(ethers.utils.parseEther("200000"));
+    expect(postDappILSupply).to.equal(ethers.utils.parseEther("100000"));
+    expect(postDappRewardsSupply).to.equal(ethers.utils.parseEther("100000"));
+  });
+
+  it("Should allow staking one sided dapp", async function() {
     let userInfo;
-    userInfo = await dappStakingPoolContract.userStakeInfo(addr1.address);
-    console.log(userInfo);
-    console.log((await dappTokenContract.balanceOf(addr1.address)).toString())
-    userInfo = await dappStakingPoolContract.userStakeInfo(owner.address);
-    console.log(userInfo);
-    await dappStakingPoolContract.stakeDapp(ethers.utils.parseEther("1"));
-    console.log((await dappTokenContract.balanceOf(addr1.address)).toString())
-    userInfo = await dappStakingPoolContract.userStakeInfo(addr1.address);
-    console.log(userInfo);
-    userInfo = await dappStakingPoolContract.userStakeInfo(owner.address);
-    console.log(userInfo);
-    await dappStakingPoolContract.stakeDappBnt(ethers.utils.parseEther("1"));
-    userInfo = await dappStakingPoolContract.userStakeInfo(addr1.address);
-    console.log(userInfo);
-    userInfo = await dappStakingPoolContract.userStakeInfo(owner.address);
-    console.log(userInfo);
+    userInfo = await dappStakingPoolContract.userPoolInfo(0, addr2.address);
+    await dappStakingPoolContract.connect(addr2).stakeDapp(ethers.utils.parseEther("1"), 0);
+    userInfo = await dappStakingPoolContract.userPoolInfo(0, addr2.address);
+    expect(userInfo.amount).to.equal(ethers.utils.parseEther("0.5"));
+    expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
+  });
+
+  it("Should allow staking DAPP-BNT LP", async function() {
+    let userInfo;
+    userInfo = await dappStakingPoolContract.userPoolInfo(0, addr2.address);
+    await dappStakingPoolContract.connect(addr2).stakeDappBnt(ethers.utils.parseEther("1"), 0);
+    userInfo = await dappStakingPoolContract.userPoolInfo(0, addr2.address);
+    expect(userInfo.amount).to.equal(ethers.utils.parseEther("1.5"));
+    expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("1"));
+  });
+
+  it("Should allow users to claim rewards", async function() {
+
   });
 });
