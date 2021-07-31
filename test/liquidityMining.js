@@ -2,6 +2,7 @@ const { expect } = require("chai");
 const { network, ethers } = require("hardhat");
 
 const liquidityProtectionSettingsAbi = require('../abi/ILiquidityProtectionSettings.json');
+const liquidityProtectionAbi = require('../abi/ILiquidityProtection.json');
 const converterRegistryDataAbi = require('../abi/IConverterRegistryData.json');
 const bancorNetworkAbi = require('../abi/IBancorNetwork.json');
 const converterAbi = require('../abi/ILiquidityPoolConverter.json');
@@ -23,10 +24,12 @@ describe("Liquidity mining", function() {
   let dappTokenContract;
   let dappBntTokenContract;
   let dappStakingPoolContract;
-  let owner, addr1, addr2, addrs;
+  let dappBntAnchor;
+  let liquidityProtectionContract;
+  let owner, addr1, addr2, addr3, addrs;
 
   before(async function() {
-    [owner, addr1, addr2, ...addrs] = await ethers.getSigners();
+    [owner, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
 
     // impersonate account w/ permissions to approve converters
     await network.provider.request({
@@ -49,6 +52,11 @@ describe("Liquidity mining", function() {
       bancorNetworkAbi,
       addr1
     );
+    liquidityProtectionContract = new ethers.Contract(
+      liquidityProtectionContractAddress,
+      liquidityProtectionAbi,
+      ethers.provider
+    );
 
     const dappStakingPoolFactory = await ethers.getContractFactory("DappStakingPool", addr1);
     const dappTokenFactory = await ethers.getContractFactory("DappToken", addr1);
@@ -61,6 +69,7 @@ describe("Liquidity mining", function() {
     await dappTokenContract.deployed();
     await dappTokenContract.mint(addr1.address, ethers.utils.parseEther("100000000"));
     await dappTokenContract.mint(addr2.address, ethers.utils.parseEther("100000000"));
+    await dappTokenContract.mint(addr3.address, ethers.utils.parseEther("100000000"));
 
     const tx = await converterDeployerContract.deployConverter(
       [dappTokenContract.address, bntAddress],
@@ -73,7 +82,7 @@ describe("Liquidity mining", function() {
       converterAbi,
       addr1
     );
-    const [ dappBntAnchor ] = await converterRegistryDataContract.getConvertibleTokenSmartTokens(dappTokenContract.address);
+    [ dappBntAnchor ] = await converterRegistryDataContract.getConvertibleTokenSmartTokens(dappTokenContract.address);
     await liquidityProtectionSettingsContract.addPoolToWhitelist(dappBntAnchor);
 
     dappBntTokenContract = await dappTokenFactory.attach(dappBntAnchor);
@@ -133,24 +142,34 @@ describe("Liquidity mining", function() {
   });
 
   it("Should allow staking one sided dapp", async function() {
+    let user = addr2;
     let userInfo;
-    userInfo = await dappStakingPoolContract.userPoolInfo(0, addr2.address);
-    await dappStakingPoolContract.connect(addr2).stakeDapp(ethers.utils.parseEther("1"), 0);
-    userInfo = await dappStakingPoolContract.userPoolInfo(0, addr2.address);
+    userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
+    await dappStakingPoolContract.connect(user).stakeDapp(ethers.utils.parseEther("1"), 0);
+    userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
     expect(userInfo.amount).to.equal(ethers.utils.parseEther("0.5"));
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
   });
 
   it("Should allow staking DAPP-BNT LP", async function() {
+    let user = addr2;
     let userInfo;
-    userInfo = await dappStakingPoolContract.userPoolInfo(0, addr2.address);
-    await dappStakingPoolContract.connect(addr2).stakeDappBnt(ethers.utils.parseEther("1"), 0);
-    userInfo = await dappStakingPoolContract.userPoolInfo(0, addr2.address);
+    userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
+    await dappStakingPoolContract.connect(user).stakeDappBnt(ethers.utils.parseEther("1"), 0);
+    userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
     expect(userInfo.amount).to.equal(ethers.utils.parseEther("1.5"));
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("1"));
   });
 
-  it("Should allow users to claim rewards", async function() {
+  it("Should allow transferring positions and notifying", async function() {
+    let user = addr3;
+    let userInfo;
+    await dappTokenContract.connect(user).approve(liquidityProtectionContractAddress, ethers.utils.parseEther("10000"));
+    const poolId = await liquidityProtectionContract.callStatic.addLiquidity(dappBntAnchor, dappTokenContract.address, ethers.utils.parseEther("1"), { from: user.address });
+    console.log('pool id ' + poolId.toString());
+    await liquidityProtectionContract.connect(user).addLiquidity(dappBntAnchor, dappTokenContract.address, ethers.utils.parseEther("1"));
+  });
 
+  it("Should allow users to claim rewards", async function() {
   });
 });
