@@ -6,10 +6,11 @@ import "@openzeppelin/contracts/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./interfaces/ILiquidityProtection.sol";
 import "./interfaces/ILiquidityProtectionStore.sol";
+import "./interfaces/ITransferPositionCallback.sol";
 
 import "hardhat/console.sol";
 
-contract DappStakingPool is OwnableUpgradeable {
+contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
     using SafeMath for uint;
 
     struct UserPoolInfo {
@@ -84,26 +85,51 @@ contract DappStakingPool is OwnableUpgradeable {
         return lpAmount;
     }
 
-    modifier updateRewards(uint pid) {
+    function updateRewards(uint pid) public {
         PoolInfo storage pool = poolInfo[pid];
         if (block.number <= pool.lastRewardBlock) {
             return;
         }
         if (pool.totalLpStaked == 0) {
             pool.lastRewardBlock = block.number;
-            _;
             return;
         }
         uint multiplier = (block.number).sub(pool.lastRewardBlock);
         uint dappReward = multiplier.mul(dappPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
         pool.accDappPerShare = pool.accDappPerShare.add(dappReward.mul(1e12).div(pool.totalLpStaked));
         pool.lastRewardBlock = block.number;
-        _;
+    }
+
+    function onTransferPosition(uint256 newId, address provider, bytes calldata data) external override {
+        uint pid;
+        bytes memory mem_data = abi.encode(data);
+        assembly {
+            pid := mload(add(mem_data, 0x20))
+        }
+        updateRewards(pid);
+
+        UserPoolInfo storage userInfo = userPoolInfo[pid][provider];
+        PoolInfo storage pool = poolInfo[pid];
+
+        require(userInfo.positionId == 0, "user already has position in pool");
+
+        if (userInfo.amount > 0) {
+            uint pending = userInfo.amount.mul(pool.accDappPerShare).div(1e12).sub(userInfo.rewardDebt);
+            userInfo.pending = userInfo.pending.add(pending);
+        }
+
+        uint lpAmount = getLpAmount(newId);
+        pool.totalLpStaked = pool.totalLpStaked.add(lpAmount);
+        userInfo.positionId = newId;
+        userInfo.amount = userInfo.amount.add(lpAmount);
+        userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
+        userInfo.depositTime = now;
     }
 
     // if there is no more bnt for single sided staking, users can still
     // stake dapp-bnt tokens
-    function stakeDappBnt(uint amount, uint pid) public updateRewards(pid) {
+    function stakeDappBnt(uint amount, uint pid) public {
+        updateRewards(pid);
         IERC20(dappBntPoolAnchor).transferFrom(msg.sender, address(this), amount);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
@@ -119,7 +145,8 @@ contract DappStakingPool is OwnableUpgradeable {
         userInfo.depositTime = now;
     }
 
-    function unstakeDappBnt(uint amount, uint pid) public updateRewards(pid) {
+    function unstakeDappBnt(uint amount, uint pid) public {
+        updateRewards(pid);
         harvest(pid);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
@@ -133,7 +160,8 @@ contract DappStakingPool is OwnableUpgradeable {
         IERC20(dappBntPoolAnchor).transfer(msg.sender, amount);
     }
 
-    function stakeDapp(uint amount, uint pid) public updateRewards(pid) {
+    function stakeDapp(uint amount, uint pid) public {
+        updateRewards(pid);
         dappToken.transferFrom(msg.sender, address(this), amount);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
@@ -189,7 +217,8 @@ contract DappStakingPool is OwnableUpgradeable {
     }
 
     // portion of total staked, PPM
-    function unstakeDapp(uint32 portion, uint pid) public updateRewards(pid) {
+    function unstakeDapp(uint32 portion, uint pid) public {
+        updateRewards(pid);
         harvest(pid);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
@@ -219,7 +248,8 @@ contract DappStakingPool is OwnableUpgradeable {
         }
     }
 
-    function harvest(uint pid) public updateRewards(pid) {
+    function harvest(uint pid) public {
+        updateRewards(pid);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
         uint pendingReward = userInfo.pending.add(userInfo.amount.mul(pool.accDappPerShare).div(1e12).sub(userInfo.rewardDebt));
@@ -245,7 +275,7 @@ contract DappStakingPool is OwnableUpgradeable {
         dappILSupply = dappILSupply.add(dappILAmount);
     }
 
-    function add(uint256 _allocPoint, uint256 _timeLocked) public onlyOwner {
+    function addPool(uint256 _allocPoint, uint256 _timeLocked) public onlyOwner {
         uint256 lastRewardBlock = block.number > startBlock ? block.number : startBlock;
         totalAllocPoint = totalAllocPoint.add(_allocPoint);
         poolInfo.push(PoolInfo({
