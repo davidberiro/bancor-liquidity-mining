@@ -1,3 +1,4 @@
+const Web3 = require("web3");
 const { expect } = require("chai");
 const { network, ethers } = require("hardhat");
 
@@ -21,6 +22,7 @@ const zeroAddress = "0x0000000000000000000000000000000000000000";
 
 describe("Liquidity mining", function() {
   this.timeout(100000);
+  const web3 = new Web3();
   let dappTokenContract;
   let dappBntTokenContract;
   let dappStakingPoolContract;
@@ -168,6 +170,14 @@ describe("Liquidity mining", function() {
     const poolId = await liquidityProtectionContract.callStatic.addLiquidity(dappBntAnchor, dappTokenContract.address, ethers.utils.parseEther("1"), { from: user.address });
     console.log('pool id ' + poolId.toString());
     await liquidityProtectionContract.connect(user).addLiquidity(dappBntAnchor, dappTokenContract.address, ethers.utils.parseEther("1"));
+    const encodedPid = web3.eth.abi.encodeParameter('uint256', '0');
+    console.log(encodedPid);
+    await liquidityProtectionContract.connect(user).transferPositionAndNotify(
+      poolId,
+      dappStakingPoolContract.address,
+      dappStakingPoolContract.address,
+      encodedPid
+    );
   });
 
   it("Should allow users to claim rewards", async function() {

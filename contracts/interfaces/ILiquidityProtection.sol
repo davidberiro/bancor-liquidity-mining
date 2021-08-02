@@ -11,6 +11,13 @@ interface ILiquidityProtection {
         uint256 amount
     ) external payable returns (uint256);
 
+    function transferPositionAndNotify(
+        uint256 id,
+        address newProvider,
+        address callback,
+        bytes calldata data
+    ) external returns (uint256);
+
     function removeLiquidity(uint256 id, uint32 portion) external;
 
     function removeLiquidityReturn(uint256 id, uint32 portion, uint timestamp) external returns (uint, uint, uint);

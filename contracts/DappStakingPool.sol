@@ -101,11 +101,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
     }
 
     function onTransferPosition(uint256 newId, address provider, bytes calldata data) external override {
-        uint pid;
-        bytes memory mem_data = abi.encode(data);
-        assembly {
-            pid := mload(add(mem_data, 0x20))
-        }
+        uint pid = abi.decode(data, (uint));
         updateRewards(pid);
 
         UserPoolInfo storage userInfo = userPoolInfo[pid][provider];
