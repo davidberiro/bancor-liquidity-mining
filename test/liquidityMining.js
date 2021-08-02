@@ -147,6 +147,8 @@ describe("Liquidity mining", function() {
     let user = addr2;
     let userInfo;
     userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
+    expect(userInfo.amount).to.equal(ethers.utils.parseEther("0"));
+    expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
     await dappStakingPoolContract.connect(user).stakeDapp(ethers.utils.parseEther("1"), 0);
     userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
     expect(userInfo.amount).to.equal(ethers.utils.parseEther("0.5"));
@@ -166,18 +168,23 @@ describe("Liquidity mining", function() {
   it("Should allow transferring positions and notifying", async function() {
     let user = addr3;
     let userInfo;
+    userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
+    expect(userInfo.amount).to.equal(ethers.utils.parseEther("0"));
+    expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
     await dappTokenContract.connect(user).approve(liquidityProtectionContractAddress, ethers.utils.parseEther("10000"));
     const poolId = await liquidityProtectionContract.callStatic.addLiquidity(dappBntAnchor, dappTokenContract.address, ethers.utils.parseEther("1"), { from: user.address });
-    console.log('pool id ' + poolId.toString());
+    //console.log('pool id ' + poolId.toString());
     await liquidityProtectionContract.connect(user).addLiquidity(dappBntAnchor, dappTokenContract.address, ethers.utils.parseEther("1"));
     const encodedPid = web3.eth.abi.encodeParameter('uint256', '0');
-    console.log(encodedPid);
     await liquidityProtectionContract.connect(user).transferPositionAndNotify(
       poolId,
       dappStakingPoolContract.address,
       dappStakingPoolContract.address,
       encodedPid
     );
+    userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
+    expect(userInfo.amount).to.equal(ethers.utils.parseEther("0.5"));
+    expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
   });
 
   it("Should allow users to claim rewards", async function() {
