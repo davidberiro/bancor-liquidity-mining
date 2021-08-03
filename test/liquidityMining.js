@@ -28,6 +28,7 @@ describe("Liquidity mining", function() {
   let dappStakingPoolContract;
   let dappBntAnchor;
   let liquidityProtectionContract;
+  let funderContract;
   let owner, addr1, addr2, addr3, addrs;
 
   before(async function() {
@@ -63,6 +64,7 @@ describe("Liquidity mining", function() {
     const dappStakingPoolFactory = await ethers.getContractFactory("DappStakingPool", addr1);
     const dappTokenFactory = await ethers.getContractFactory("DappToken", addr1);
     const converterDeployerFactory = await ethers.getContractFactory("ConverterDeployer");
+    const funderFactory = await ethers.getContractFactory("Funder");
 
     const converterDeployerContract = await converterDeployerFactory.deploy();
     await converterDeployerContract.deployed();
@@ -124,15 +126,21 @@ describe("Liquidity mining", function() {
     await dappTokenContract.connect(addr2).approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
     await dappBntTokenContract.connect(addr2).approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
     await dappBntTokenContract.transfer(addr2.address, ethers.utils.parseEther("10"));
+
+    funderContract = await funderFactory.deploy(dappStakingPoolContract.address,dappTokenContract.address,7000);
+    await funderContract.deployed();
+    await dappTokenContract.mint(funderContract.address, ethers.utils.parseEther("1000000"));
   });
 
   it("Should allow funding dapp rewards and IL", async function() {
     const prevDappSupply = await dappTokenContract.balanceOf(dappStakingPoolContract.address);
     const prevDappILSupply = await dappStakingPoolContract.dappILSupply();
     const prevDappRewardsSupply = await dappStakingPoolContract.dappRewardsSupply();
+    const prevFunderBalance = await dappTokenContract.balanceOf(funderContract.address);
     expect(prevDappSupply.toString()).to.equal('0');
     expect(prevDappILSupply.toString()).to.equal('0');
     expect(prevDappRewardsSupply.toString()).to.equal('0');
+    expect(prevFunderBalance.toString()).to.equal(ethers.utils.parseEther("1000000"));
     await dappTokenContract.approve(dappStakingPoolContract.address, ethers.utils.parseEther("100000000"));
     await dappStakingPoolContract.fund(ethers.utils.parseEther("100000"), ethers.utils.parseEther("100000"));
     const postDappSupply = await dappTokenContract.balanceOf(dappStakingPoolContract.address);
@@ -141,6 +149,15 @@ describe("Liquidity mining", function() {
     expect(postDappSupply).to.equal(ethers.utils.parseEther("200000"));
     expect(postDappILSupply).to.equal(ethers.utils.parseEther("100000"));
     expect(postDappRewardsSupply).to.equal(ethers.utils.parseEther("100000"));
+    await funderContract.fund();
+    const postFundDappSupply = await dappTokenContract.balanceOf(dappStakingPoolContract.address);
+    const postFundDappILSupply = await dappStakingPoolContract.dappILSupply();
+    const postFundDappRewardsSupply = await dappStakingPoolContract.dappRewardsSupply();
+    const postFundFunderBalance = await dappTokenContract.balanceOf(funderContract.address);
+    expect(postFundFunderBalance.toString()).to.equal('0');
+    expect(postFundDappSupply).to.equal(ethers.utils.parseEther("1200000"));
+    expect(postFundDappILSupply).to.equal(ethers.utils.parseEther("400000"));
+    expect(postFundDappRewardsSupply).to.equal(ethers.utils.parseEther("800000"));
   });
 
   it("Should allow staking one sided dapp", async function() {

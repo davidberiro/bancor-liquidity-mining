@@ -9,7 +9,7 @@
     "hardhat": "^2.4.3"
   },
   "scripts": {
-    "test": "npx hardhat test --network local"
+    "test": "npx hardhat test --network hardhat"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^3.3.0",
