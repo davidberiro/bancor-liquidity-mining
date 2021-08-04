@@ -7,14 +7,19 @@ const liquidityProtectionAbi = require('../abi/ILiquidityProtection.json');
 const converterRegistryDataAbi = require('../abi/IConverterRegistryData.json');
 const bancorNetworkAbi = require('../abi/IBancorNetwork.json');
 const converterAbi = require('../abi/ILiquidityPoolConverter.json');
+const erc20Abi = require('../abi/IERC20.json');
 
 const liquidityProtectionSettingsAdminAddress = "0xdfeE8DC240c6CadC2c7f7f9c257c259914dEa84E";
 const liquidityProtectionSettingsContractAddress = "0xF7D28FaA1FE9Ea53279fE6e3Cde75175859bdF46";
 const liquidityProtectionStoreContractAddress = "0xf5FAB5DBD2f3bf675dE4cB76517d4767013cfB55";
 const liquidityProtectionContractAddress = "0x853c2D147a1BD7edA8FE0f58fb3C5294dB07220e";
+const converterDappBntAddress = "0xd3840a74e6111f3d37a93dd67673f3de136e598a";
 const converterRegistryDataAddress = "0x2BF0B9119535a7a5E9a3f8aD1444594845c3A86B";
 const bancorNetworkAddress = "0x2F9EC37d6CcFFf1caB21733BdaDEdE11c823cCB0";
 const bntAddress = "0x1f573d6fb3f13d689ff844b4ce37794d79a7ff1c";
+const bntOwnerAddress = "0xa489c2b5b36835a327851ab917a80562b5afc244";
+const dappAddress = "0x939b462ee3311f8926c047d2b576c389092b1649";
+const dappMinterAddress = "0xce9b04be4e87548d34b8a2180b85310424c84518";
 const wethAddress = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
 const bancorEthAddress = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 const ethBntAddress = "0xb1CD6e4153B2a390Cf00A6556b0fC1458C4A5533";
@@ -24,6 +29,7 @@ describe("Liquidity mining", function() {
   this.timeout(100000);
   const web3 = new Web3();
   let dappTokenContract;
+  let bntTokenContract;
   let dappBntTokenContract;
   let dappStakingPoolContract;
   let dappBntAnchor;
@@ -61,34 +67,46 @@ describe("Liquidity mining", function() {
       ethers.provider
     );
 
+    await network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [dappMinterAddress],
+    });
+    const dappMinterSigner = await ethers.getSigner(dappMinterAddress);
+    dappTokenContract = new ethers.Contract(
+      dappAddress,
+      erc20Abi,
+      dappMinterSigner
+    );
+
+    await network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [bntOwnerAddress],
+    });
+    const bntMinterSigner = await ethers.getSigner(bntOwnerAddress);
+    bntTokenContract = new ethers.Contract(
+      bntAddress,
+      erc20Abi,
+      bntMinterSigner
+    );
+
     const dappStakingPoolFactory = await ethers.getContractFactory("DappStakingPool", addr1);
     const dappTokenFactory = await ethers.getContractFactory("DappToken", addr1);
-    const converterDeployerFactory = await ethers.getContractFactory("ConverterDeployer");
     const funderFactory = await ethers.getContractFactory("Funder");
 
-    const converterDeployerContract = await converterDeployerFactory.deploy();
-    await converterDeployerContract.deployed();
-
-    dappTokenContract = await dappTokenFactory.deploy();
-    await dappTokenContract.deployed();
-    await dappTokenContract.mint(addr1.address, ethers.utils.parseEther("100000000"));
-    await dappTokenContract.mint(addr2.address, ethers.utils.parseEther("100000000"));
-    await dappTokenContract.mint(addr3.address, ethers.utils.parseEther("100000000"));
-
-    const tx = await converterDeployerContract.deployConverter(
-      [dappTokenContract.address, bntAddress],
-      [500000, 500000]
-    );
-    const txReceipt = await ethers.provider.getTransactionReceipt(tx.hash);
-    const converterAddress = '0x'+txReceipt.logs[txReceipt.logs.length-1].data.substring(26);
+    await network.provider.send("hardhat_setBalance", [
+      dappMinterAddress,
+      "0x10000000000000",
+    ]);
+    await dappTokenContract.mint(addr1.address, ethers.utils.parseEther("100000000000"));
+    await dappTokenContract.mint(addr2.address, ethers.utils.parseEther("100000000000"));
+    await dappTokenContract.mint(addr3.address, ethers.utils.parseEther("100000000000"));
     const dappConverterContract = new ethers.Contract(
-      converterAddress,
+      converterDappBntAddress,
       converterAbi,
       addr1
     );
     [ dappBntAnchor ] = await converterRegistryDataContract.getConvertibleTokenSmartTokens(dappTokenContract.address);
     await liquidityProtectionSettingsContract.addPoolToWhitelist(dappBntAnchor);
-
     dappBntTokenContract = await dappTokenFactory.attach(dappBntAnchor);
     const bntToken = await dappTokenFactory.attach(bntAddress);
     await bancorNetworkContract.convertByPath(
@@ -103,11 +121,12 @@ describe("Liquidity mining", function() {
       }
     );
 
-    await dappTokenContract.approve(converterAddress, ethers.utils.parseEther("10000000000"));
-    await bntToken.approve(converterAddress, ethers.utils.parseEther("10000000000"));
+    await dappTokenContract.connect(addr1).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
+    await bntToken.approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
+    //  1 DAPP ~ 0.007301 BNT
     await dappConverterContract.addLiquidity(
       [dappTokenContract.address, bntAddress],
-      [ethers.utils.parseEther("100000"), ethers.utils.parseEther("15000")],
+      [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
       '1'
     );
 
@@ -125,7 +144,7 @@ describe("Liquidity mining", function() {
 
     await dappTokenContract.connect(addr2).approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
     await dappBntTokenContract.connect(addr2).approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
-    await dappBntTokenContract.transfer(addr2.address, ethers.utils.parseEther("10"));
+    await dappBntTokenContract.connect(addr1).transfer(addr2.address, ethers.utils.parseEther("10"));
 
     funderContract = await funderFactory.deploy(dappStakingPoolContract.address,dappTokenContract.address,7000);
     await funderContract.deployed();
@@ -141,7 +160,7 @@ describe("Liquidity mining", function() {
     expect(prevDappILSupply.toString()).to.equal('0');
     expect(prevDappRewardsSupply.toString()).to.equal('0');
     expect(prevFunderBalance.toString()).to.equal(ethers.utils.parseEther("1000000"));
-    await dappTokenContract.approve(dappStakingPoolContract.address, ethers.utils.parseEther("100000000"));
+    await dappTokenContract.connect(addr1).approve(dappStakingPoolContract.address, ethers.utils.parseEther("100000000"));
     await dappStakingPoolContract.fund(ethers.utils.parseEther("100000"), ethers.utils.parseEther("100000"));
     const postDappSupply = await dappTokenContract.balanceOf(dappStakingPoolContract.address);
     const postDappILSupply = await dappStakingPoolContract.dappILSupply();
@@ -168,7 +187,7 @@ describe("Liquidity mining", function() {
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
     await dappStakingPoolContract.connect(user).stakeDapp(ethers.utils.parseEther("1"), 0);
     userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
-    expect(userInfo.amount).to.equal(ethers.utils.parseEther("0.5"));
+    expect(userInfo.amount).to.equal(ethers.utils.parseEther("0.005"));
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
   });
 
@@ -178,7 +197,7 @@ describe("Liquidity mining", function() {
     userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
     await dappStakingPoolContract.connect(user).stakeDappBnt(ethers.utils.parseEther("1"), 0);
     userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
-    expect(userInfo.amount).to.equal(ethers.utils.parseEther("1.5"));
+    expect(userInfo.amount).to.equal(ethers.utils.parseEther("1.005"));
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("1"));
   });
 
@@ -190,7 +209,6 @@ describe("Liquidity mining", function() {
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
     await dappTokenContract.connect(user).approve(liquidityProtectionContractAddress, ethers.utils.parseEther("10000"));
     const poolId = await liquidityProtectionContract.callStatic.addLiquidity(dappBntAnchor, dappTokenContract.address, ethers.utils.parseEther("1"), { from: user.address });
-    //console.log('pool id ' + poolId.toString());
     await liquidityProtectionContract.connect(user).addLiquidity(dappBntAnchor, dappTokenContract.address, ethers.utils.parseEther("1"));
     const encodedPid = web3.eth.abi.encodeParameter('uint256', '0');
     await liquidityProtectionContract.connect(user).transferPositionAndNotify(
@@ -200,7 +218,7 @@ describe("Liquidity mining", function() {
       encodedPid
     );
     userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
-    expect(userInfo.amount).to.equal(ethers.utils.parseEther("0.5"));
+    expect(userInfo.amount).to.equal(ethers.utils.parseEther("0.005"));
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
   });
 
