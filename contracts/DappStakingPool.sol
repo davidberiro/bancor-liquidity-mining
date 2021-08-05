@@ -147,7 +147,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         harvest(pid);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
-        require(userInfo.depositTime + pool.timeLocked >= now, "Still locked");
+        require(userInfo.depositTime + pool.timeLocked <= now, "Still locked");
 
         pool.totalLpStaked = pool.totalLpStaked.sub(amount);
         // this line validates user balance
@@ -219,14 +219,15 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         harvest(pid);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
-        require(userInfo.depositTime + pool.timeLocked >= now, "Still locked");
+        require(userInfo.depositTime + pool.timeLocked <= now, "Still locked");
 
         uint prevLpAmount = getLpAmount(userInfo.positionId);
         (uint targetAmount, uint baseAmount, uint networkAmount) = liquidityProtection.removeLiquidityReturn(userInfo.positionId, portion, block.timestamp);
+        console.log(baseAmount);
+        console.log(targetAmount);
         liquidityProtection.removeLiquidity(userInfo.positionId, portion);
         uint diff = targetAmount.sub(baseAmount);
         uint newLpAmount = getLpAmount(userInfo.positionId);
-
 
         pool.totalLpStaked = pool.totalLpStaked.sub(userInfo.amount.sub(newLpAmount));
         userInfo.amount = userInfo.amount.sub(prevLpAmount.sub(newLpAmount));
@@ -236,10 +237,11 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             if (dappILSupply >= diff) {
                 // cover difference from IL, burn BNT
                 dappILSupply = dappILSupply.sub(diff);
-                dappToken.transfer(msg.sender, diff);
-                bntToken.transfer(address(0), networkAmount);
+                dappToken.transfer(msg.sender, targetAmount);
+                bntToken.transfer(address(0x000000000000000000000000000000000000dEaD), networkAmount);
             } else {
                 // if can't afford, only add base amount, compensate with bnt
+                dappToken.transfer(msg.sender, baseAmount);
                 bntToken.transfer(msg.sender, networkAmount);
             }
         }
@@ -272,7 +274,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         dappILSupply = dappILSupply.add(dappILAmount);
     }
 
-    function addPool(uint256 _allocPoint, uint256 _timeLocked) public onlyOwner {
+    function add(uint256 _allocPoint, uint256 _timeLocked) public onlyOwner {
         uint256 lastRewardBlock = block.number > startBlock ? block.number : startBlock;
         totalAllocPoint = totalAllocPoint.add(_allocPoint);
         poolInfo.push(PoolInfo({
