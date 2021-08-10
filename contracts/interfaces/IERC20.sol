@@ -23,7 +23,7 @@ interface IERC20 {
      *
      * Emits a {Transfer} event.
      */
-    function issue(address recipient, uint256 amount) external;
+    function issue(address _to, uint256 _amount) external;
 
     /**
      * @dev issues `amount` tokens to `recipient`.

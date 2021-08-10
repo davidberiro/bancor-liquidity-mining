@@ -30,6 +30,14 @@ module.exports = {
       },
       blockGasLimit: 12e6
     },
+    fork: {
+      url: "",
+      forking: {
+        blockNumber: 12786615,
+        url: `https://eth-mainnet.alchemyapi.io/v2/${config.alchemyKey}`
+      },
+      blockGasLimit: 12e6
+    }
   },
   gasReporter: {
     currency: "USD",

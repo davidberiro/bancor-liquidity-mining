@@ -97,9 +97,27 @@ describe("Liquidity mining", function() {
       dappMinterAddress,
       "0x10000000000000",
     ]);
+    await network.provider.send("hardhat_setBalance", [
+      bntOwnerAddress,
+      "0x10000000000000",
+    ]);
+
     await dappTokenContract.mint(addr1.address, ethers.utils.parseEther("100000000000"));
     await dappTokenContract.mint(addr2.address, ethers.utils.parseEther("100000000000"));
     await dappTokenContract.mint(addr3.address, ethers.utils.parseEther("100000000000"));
+    await dappTokenContract.mint("0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097", ethers.utils.parseEther("100000000000"));
+    await dappTokenContract.mint("0xcd3b766ccdd6ae721141f452c550ca635964ce71", ethers.utils.parseEther("100000000000"));
+    await dappTokenContract.mint("0x2546bcd3c84621e976d8185a91a922ae77ecec30", ethers.utils.parseEther("100000000000"));
+    await dappTokenContract.mint("0xbda5747bfd65f08deb54cb465eb87d40e51b197e", ethers.utils.parseEther("100000000000"));
+    await dappTokenContract.mint("0xdd2fd4581271e230360230f9337d5c0430bf44c0", ethers.utils.parseEther("100000000000"));
+    await dappTokenContract.mint("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199", ethers.utils.parseEther("100000000000"));
+    await bntTokenContract.issue("0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097", ethers.utils.parseEther("100000000000"));
+    await bntTokenContract.issue("0xcd3b766ccdd6ae721141f452c550ca635964ce71", ethers.utils.parseEther("100000000000"));
+    await bntTokenContract.issue("0x2546bcd3c84621e976d8185a91a922ae77ecec30", ethers.utils.parseEther("100000000000"));
+    await bntTokenContract.issue("0xbda5747bfd65f08deb54cb465eb87d40e51b197e", ethers.utils.parseEther("100000000000"));
+    await bntTokenContract.issue("0xdd2fd4581271e230360230f9337d5c0430bf44c0", ethers.utils.parseEther("100000000000"));
+    await bntTokenContract.issue("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199", ethers.utils.parseEther("100000000000"));
+
     const dappConverterContract = new ethers.Contract(
       converterDappBntAddress,
       converterAbi,
@@ -130,6 +148,84 @@ describe("Liquidity mining", function() {
       '1'
     );
 
+    await network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: ["0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097"],
+    });
+    const lp1 = await ethers.getSigner("0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097");
+    await dappTokenContract.connect(lp1).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
+    await bntToken.connect(lp1).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
+    await dappConverterContract.connect(lp1).addLiquidity(
+      [dappTokenContract.address, bntAddress],
+      [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
+      '1'
+    );
+
+    await network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: ["0xcd3b766ccdd6ae721141f452c550ca635964ce71"],
+    });
+    const lp2 = await ethers.getSigner("0xcd3b766ccdd6ae721141f452c550ca635964ce71");
+    await dappTokenContract.connect(lp2).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
+    await bntToken.connect(lp2).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
+    await dappConverterContract.connect(lp2).addLiquidity(
+      [dappTokenContract.address, bntAddress],
+      [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
+      '1'
+    );
+
+    await network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: ["0x2546bcd3c84621e976d8185a91a922ae77ecec30"],
+    });
+    const lp3 = await ethers.getSigner("0x2546bcd3c84621e976d8185a91a922ae77ecec30");
+    await dappTokenContract.connect(lp3).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
+    await bntToken.connect(lp3).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
+    await dappConverterContract.connect(lp3).addLiquidity(
+      [dappTokenContract.address, bntAddress],
+      [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
+      '1'
+    );
+
+    await network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: ["0xbda5747bfd65f08deb54cb465eb87d40e51b197e"],
+    });
+    const lp4 = await ethers.getSigner("0xbda5747bfd65f08deb54cb465eb87d40e51b197e");
+    await dappTokenContract.connect(lp4).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
+    await bntToken.connect(lp4).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
+    await dappConverterContract.connect(lp4).addLiquidity(
+      [dappTokenContract.address, bntAddress],
+      [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
+      '1'
+    );
+
+    await network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: ["0xdd2fd4581271e230360230f9337d5c0430bf44c0"],
+    });
+    const lp5 = await ethers.getSigner("0xdd2fd4581271e230360230f9337d5c0430bf44c0");
+    await dappTokenContract.connect(lp5).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
+    await bntToken.connect(lp5).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
+    await dappConverterContract.connect(lp5).addLiquidity(
+      [dappTokenContract.address, bntAddress],
+      [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
+      '1'
+    );
+
+    await network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: ["0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199"],
+    });
+    const lp6 = await ethers.getSigner("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199");
+    await dappTokenContract.connect(lp6).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
+    await bntToken.connect(lp6).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
+    await dappConverterContract.connect(lp6).addLiquidity(
+      [dappTokenContract.address, bntAddress],
+      [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
+      '1'
+    );
+
     const blockNumber = await ethers.provider.getBlockNumber();
     dappStakingPoolContract = await dappStakingPoolFactory.deploy();
     await dappStakingPoolContract.deployed();
@@ -149,78 +245,87 @@ describe("Liquidity mining", function() {
     funderContract = await funderFactory.deploy(dappStakingPoolContract.address,dappTokenContract.address,7000);
     await funderContract.deployed();
     await dappTokenContract.mint(funderContract.address, ethers.utils.parseEther("1000000"));
+    
+    console.log(`staking pool: ${dappStakingPoolContract.address}\n`)
+
+    console.log(`0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097\nDAPP: ${(await dappTokenContract.balanceOf("0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097")).toString()}\nBNT: ${(await bntTokenContract.balanceOf("0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097")).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf("0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097")).toString()}\n`)
+    console.log(`0xcd3b766ccdd6ae721141f452c550ca635964ce71\nDAPP: ${(await dappTokenContract.balanceOf("0xcd3b766ccdd6ae721141f452c550ca635964ce71")).toString()}\nBNT: ${(await bntTokenContract.balanceOf("0xcd3b766ccdd6ae721141f452c550ca635964ce71")).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf("0xcd3b766ccdd6ae721141f452c550ca635964ce71")).toString()}\n`)
+    console.log(`0x2546bcd3c84621e976d8185a91a922ae77ecec30\nDAPP: ${(await dappTokenContract.balanceOf("0x2546bcd3c84621e976d8185a91a922ae77ecec30")).toString()}\nBNT: ${(await bntTokenContract.balanceOf("0x2546bcd3c84621e976d8185a91a922ae77ecec30")).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf("0x2546bcd3c84621e976d8185a91a922ae77ecec30")).toString()}\n`)
+    console.log(`0xbda5747bfd65f08deb54cb465eb87d40e51b197e\nDAPP: ${(await dappTokenContract.balanceOf("0xbda5747bfd65f08deb54cb465eb87d40e51b197e")).toString()}\nBNT: ${(await bntTokenContract.balanceOf("0xbda5747bfd65f08deb54cb465eb87d40e51b197e")).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf("0xbda5747bfd65f08deb54cb465eb87d40e51b197e")).toString()}\n`)
+    console.log(`0xdd2fd4581271e230360230f9337d5c0430bf44c0\nDAPP: ${(await dappTokenContract.balanceOf("0xdd2fd4581271e230360230f9337d5c0430bf44c0")).toString()}\nBNT: ${(await bntTokenContract.balanceOf("0xdd2fd4581271e230360230f9337d5c0430bf44c0")).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf("0xdd2fd4581271e230360230f9337d5c0430bf44c0")).toString()}\n`)
+    console.log(`0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199\nDAPP: ${(await dappTokenContract.balanceOf("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199")).toString()}\nBNT: ${(await bntTokenContract.balanceOf("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199")).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199")).toString()}\n`)
   });
 
-  it("Should allow funding dapp rewards and IL", async function() {
-    const prevDappSupply = await dappTokenContract.balanceOf(dappStakingPoolContract.address);
-    const prevDappILSupply = await dappStakingPoolContract.dappILSupply();
-    const prevDappRewardsSupply = await dappStakingPoolContract.dappRewardsSupply();
-    const prevFunderBalance = await dappTokenContract.balanceOf(funderContract.address);
-    expect(prevDappSupply.toString()).to.equal('0');
-    expect(prevDappILSupply.toString()).to.equal('0');
-    expect(prevDappRewardsSupply.toString()).to.equal('0');
-    expect(prevFunderBalance.toString()).to.equal(ethers.utils.parseEther("1000000"));
-    await dappTokenContract.connect(addr1).approve(dappStakingPoolContract.address, ethers.utils.parseEther("100000000"));
-    await dappStakingPoolContract.fund(ethers.utils.parseEther("100000"), ethers.utils.parseEther("100000"));
-    const postDappSupply = await dappTokenContract.balanceOf(dappStakingPoolContract.address);
-    const postDappILSupply = await dappStakingPoolContract.dappILSupply();
-    const postDappRewardsSupply = await dappStakingPoolContract.dappRewardsSupply();
-    expect(postDappSupply).to.equal(ethers.utils.parseEther("200000"));
-    expect(postDappILSupply).to.equal(ethers.utils.parseEther("100000"));
-    expect(postDappRewardsSupply).to.equal(ethers.utils.parseEther("100000"));
-    await funderContract.fund();
-    const postFundDappSupply = await dappTokenContract.balanceOf(dappStakingPoolContract.address);
-    const postFundDappILSupply = await dappStakingPoolContract.dappILSupply();
-    const postFundDappRewardsSupply = await dappStakingPoolContract.dappRewardsSupply();
-    const postFundFunderBalance = await dappTokenContract.balanceOf(funderContract.address);
-    expect(postFundFunderBalance.toString()).to.equal('0');
-    expect(postFundDappSupply).to.equal(ethers.utils.parseEther("1200000"));
-    expect(postFundDappILSupply).to.equal(ethers.utils.parseEther("400000"));
-    expect(postFundDappRewardsSupply).to.equal(ethers.utils.parseEther("800000"));
-  });
+  // it("Should allow funding dapp rewards and IL", async function() {
+  //   const prevDappSupply = await dappTokenContract.balanceOf(dappStakingPoolContract.address);
+  //   const prevDappILSupply = await dappStakingPoolContract.dappILSupply();
+  //   const prevDappRewardsSupply = await dappStakingPoolContract.dappRewardsSupply();
+  //   const prevFunderBalance = await dappTokenContract.balanceOf(funderContract.address);
+  //   expect(prevDappSupply.toString()).to.equal('0');
+  //   expect(prevDappILSupply.toString()).to.equal('0');
+  //   expect(prevDappRewardsSupply.toString()).to.equal('0');
+  //   expect(prevFunderBalance.toString()).to.equal(ethers.utils.parseEther("1000000"));
+  //   await dappTokenContract.connect(addr1).approve(dappStakingPoolContract.address, ethers.utils.parseEther("100000000"));
+  //   await dappStakingPoolContract.fund(ethers.utils.parseEther("100000"), ethers.utils.parseEther("100000"));
+  //   const postDappSupply = await dappTokenContract.balanceOf(dappStakingPoolContract.address);
+  //   const postDappILSupply = await dappStakingPoolContract.dappILSupply();
+  //   const postDappRewardsSupply = await dappStakingPoolContract.dappRewardsSupply();
+  //   expect(postDappSupply).to.equal(ethers.utils.parseEther("200000"));
+  //   expect(postDappILSupply).to.equal(ethers.utils.parseEther("100000"));
+  //   expect(postDappRewardsSupply).to.equal(ethers.utils.parseEther("100000"));
+  //   await funderContract.fund();
+  //   const postFundDappSupply = await dappTokenContract.balanceOf(dappStakingPoolContract.address);
+  //   const postFundDappILSupply = await dappStakingPoolContract.dappILSupply();
+  //   const postFundDappRewardsSupply = await dappStakingPoolContract.dappRewardsSupply();
+  //   const postFundFunderBalance = await dappTokenContract.balanceOf(funderContract.address);
+  //   expect(postFundFunderBalance.toString()).to.equal('0');
+  //   expect(postFundDappSupply).to.equal(ethers.utils.parseEther("1200000"));
+  //   expect(postFundDappILSupply).to.equal(ethers.utils.parseEther("400000"));
+  //   expect(postFundDappRewardsSupply).to.equal(ethers.utils.parseEther("800000"));
+  // });
 
-  it("Should allow staking one sided dapp", async function() {
-    let user = addr2;
-    let userInfo;
-    userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
-    expect(userInfo.amount).to.equal(ethers.utils.parseEther("0"));
-    expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
-    await dappStakingPoolContract.connect(user).stakeDapp(ethers.utils.parseEther("1"), 0);
-    userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
-    expect(userInfo.amount).to.equal(ethers.utils.parseEther("0.005"));
-    expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
-  });
+  // it("Should allow staking one sided dapp", async function() {
+  //   let user = addr2;
+  //   let userInfo;
+  //   userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
+  //   expect(userInfo.amount).to.equal(ethers.utils.parseEther("0"));
+  //   expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
+  //   await dappStakingPoolContract.connect(user).stakeDapp(ethers.utils.parseEther("1"), 0);
+  //   userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
+  //   expect(userInfo.amount).to.equal(ethers.utils.parseEther("0.005"));
+  //   expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
+  // });
 
-  it("Should allow staking DAPP-BNT LP", async function() {
-    let user = addr2;
-    let userInfo;
-    userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
-    await dappStakingPoolContract.connect(user).stakeDappBnt(ethers.utils.parseEther("1"), 0);
-    userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
-    expect(userInfo.amount).to.equal(ethers.utils.parseEther("1.005"));
-    expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("1"));
-  });
+  // it("Should allow staking DAPP-BNT LP", async function() {
+  //   let user = addr2;
+  //   let userInfo;
+  //   userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
+  //   await dappStakingPoolContract.connect(user).stakeDappBnt(ethers.utils.parseEther("1"), 0);
+  //   userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
+  //   expect(userInfo.amount).to.equal(ethers.utils.parseEther("1.005"));
+  //   expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("1"));
+  // });
 
-  it("Should allow transferring positions and notifying", async function() {
-    let user = addr3;
-    let userInfo;
-    userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
-    expect(userInfo.amount).to.equal(ethers.utils.parseEther("0"));
-    expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
-    await dappTokenContract.connect(user).approve(liquidityProtectionContractAddress, ethers.utils.parseEther("10000"));
-    const poolId = await liquidityProtectionContract.callStatic.addLiquidity(dappBntAnchor, dappTokenContract.address, ethers.utils.parseEther("1"), { from: user.address });
-    await liquidityProtectionContract.connect(user).addLiquidity(dappBntAnchor, dappTokenContract.address, ethers.utils.parseEther("1"));
-    const encodedPid = web3.eth.abi.encodeParameter('uint256', '0');
-    await liquidityProtectionContract.connect(user).transferPositionAndNotify(
-      poolId,
-      dappStakingPoolContract.address,
-      dappStakingPoolContract.address,
-      encodedPid
-    );
-    userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
-    expect(userInfo.amount).to.equal(ethers.utils.parseEther("0.005"));
-    expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
-  });
+  // it("Should allow transferring positions and notifying", async function() {
+  //   let user = addr3;
+  //   let userInfo;
+  //   userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
+  //   expect(userInfo.amount).to.equal(ethers.utils.parseEther("0"));
+  //   expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
+  //   await dappTokenContract.connect(user).approve(liquidityProtectionContractAddress, ethers.utils.parseEther("10000"));
+  //   const poolId = await liquidityProtectionContract.callStatic.addLiquidity(dappBntAnchor, dappTokenContract.address, ethers.utils.parseEther("1"), { from: user.address });
+  //   await liquidityProtectionContract.connect(user).addLiquidity(dappBntAnchor, dappTokenContract.address, ethers.utils.parseEther("1"));
+  //   const encodedPid = web3.eth.abi.encodeParameter('uint256', '0');
+  //   await liquidityProtectionContract.connect(user).transferPositionAndNotify(
+  //     poolId,
+  //     dappStakingPoolContract.address,
+  //     dappStakingPoolContract.address,
+  //     encodedPid
+  //   );
+  //   userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
+  //   expect(userInfo.amount).to.equal(ethers.utils.parseEther("0.005"));
+  //   expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
+  // });
 
   it("Should allow users to claim rewards", async function() {
   });
