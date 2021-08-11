@@ -71,13 +71,13 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
 
         dappToken.approve(address(liquidityProtection), uint(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF));
         poolInfo.push(PoolInfo({
-            allocPoint: 1000,
+            allocPoint: 0,
             timeLocked: 0,
             lastRewardBlock: _startBlock,
             accDappPerShare: 0,
             totalLpStaked: 0
         }));
-        totalAllocPoint = 1000;
+        totalAllocPoint = 0;
     }
 
     function getLpAmount(uint positionId) private view returns (uint) {
