@@ -257,11 +257,6 @@ describe("Liquidity mining", function() {
     console.log(`0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199\nDAPP: ${(await dappTokenContract.balanceOf("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199")).toString()}\nBNT: ${(await bntTokenContract.balanceOf("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199")).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199")).toString()}\n`)
 
     await liquidityProtectionSettingsContract.setProtectionDelays(60,200);
-    await dappStakingPoolContract.addPool(1000,3*60);
-    await dappStakingPoolContract.addPool(1000,6*60);
-    await dappStakingPoolContract.addPool(1000,12*60);
-    await dappStakingPoolContract.addPool(1000,18*60);
-    await dappStakingPoolContract.addPool(1000,24*60);
   });
 
   // it("Should allow funding dapp rewards and IL", async function() {
