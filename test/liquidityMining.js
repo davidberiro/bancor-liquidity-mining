@@ -337,4 +337,56 @@ describe("Liquidity mining", function() {
 
   it("Should allow users to claim rewards", async function() {
   });
+
+  it("Should allow admin to add pool", async function() {
+    await dappStakingPoolContract.add('2000', '100');
+    const poolInfo = await dappStakingPoolContract.poolInfo(6);
+    expect(poolInfo.allocPoint.toString()).to.equal('2000');
+    expect(poolInfo.timeLocked.toString()).to.equal('100');
+    expect(poolInfo.accDappPerShare.toString()).to.equal('0');
+    expect(poolInfo.totalLpStaked.toString()).to.equal('0');
+  });
+
+  it("Should allow staking to timelocked pool", async function() {
+    let user = addr2;
+    let userInfo;
+    userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
+    expect(userInfo.amount).to.equal(ethers.utils.parseEther("0"));
+    expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
+    await dappStakingPoolContract.connect(user).stakeDapp(ethers.utils.parseEther("1"), 6);
+    userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
+    expect(userInfo.amount).to.equal(ethers.utils.parseEther("0.005"));
+    expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
+  });
+
+  it("Should not allow user to unstake early from timelocked pool", async function() {
+    let user = addr2;
+    let failed = false;
+    try {
+      await dappStakingPoolContract.connect(user).unstakeDapp('1000000', 6);
+    } catch (e) {
+      failed = true;
+    }
+    expect(failed).to.be.true;
+  });
+
+  it("Should allow user to unstake from timelocked pool after enough time", async function() {
+    let user = addr2;
+    let userInfo;
+    // advance time
+    const nowBlock = await ethers.provider.getBlockNumber();
+    const timestamp = (await ethers.provider.getBlock(nowBlock)).timestamp;
+    await ethers.provider.send("evm_mine", [ timestamp + 1000 ]);
+
+    const userPreDappBalance = await dappTokenContract.balanceOf(user.address);
+    userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
+    expect(userInfo.amount).to.equal(ethers.utils.parseEther("0.005"));
+    expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
+    await dappStakingPoolContract.connect(user).unstakeDapp('1000000', 6);
+    userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
+    expect(userInfo.amount).to.equal(ethers.utils.parseEther("0"));
+    expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
+    const userPostDappBalance = await dappTokenContract.balanceOf(user.address);
+    console.log((userPostDappBalance.sub(userPreDappBalance)).toString());
+  });
 });

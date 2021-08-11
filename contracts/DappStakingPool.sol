@@ -77,7 +77,44 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             accDappPerShare: 0,
             totalLpStaked: 0
         }));
-        totalAllocPoint = 0;
+        // 3m*30days*24hours*60min*60s = 90 days in seconds
+        poolInfo.push(PoolInfo({
+            allocPoint: 476,
+            timeLocked: 3*30*24*60*60,
+            lastRewardBlock: _startBlock,
+            accDappPerShare: 0,
+            totalLpStaked: 0
+        }));
+        poolInfo.push(PoolInfo({
+            allocPoint: 952,
+            timeLocked: 6*30*24*60*60,
+            lastRewardBlock: _startBlock,
+            accDappPerShare: 0,
+            totalLpStaked: 0
+        }));
+        poolInfo.push(PoolInfo({
+            allocPoint: 1905,
+            timeLocked: 12*30*24*60*60,
+            lastRewardBlock: _startBlock,
+            accDappPerShare: 0,
+            totalLpStaked: 0
+        }));
+        poolInfo.push(PoolInfo({
+            allocPoint: 2857,
+            timeLocked: 18*30*24*60*60,
+            lastRewardBlock: _startBlock,
+            accDappPerShare: 0,
+            totalLpStaked: 0
+        }));
+        poolInfo.push(PoolInfo({
+            allocPoint: 3810,
+            timeLocked: 24*30*24*60*60,
+            lastRewardBlock: _startBlock,
+            accDappPerShare: 0,
+            totalLpStaked: 0
+        }));
+        // 476 + 952 + 1905 + 2857 + 3810 = 10000
+        totalAllocPoint = 10000;
     }
 
     function getLpAmount(uint positionId) private view returns (uint) {
@@ -147,7 +184,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         harvest(pid);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
-        require(userInfo.depositTime + pool.timeLocked >= now, "Still locked");
+        require(userInfo.depositTime + pool.timeLocked <= now, "Still locked");
 
         pool.totalLpStaked = pool.totalLpStaked.sub(amount);
         // this line validates user balance
@@ -219,14 +256,15 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         harvest(pid);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
-        require(userInfo.depositTime + pool.timeLocked >= now, "Still locked");
+        require(userInfo.depositTime + pool.timeLocked <= now, "Still locked");
 
         uint prevLpAmount = getLpAmount(userInfo.positionId);
         (uint targetAmount, uint baseAmount, uint networkAmount) = liquidityProtection.removeLiquidityReturn(userInfo.positionId, portion, block.timestamp);
+        console.log(baseAmount);
+        console.log(targetAmount);
         liquidityProtection.removeLiquidity(userInfo.positionId, portion);
         uint diff = targetAmount.sub(baseAmount);
         uint newLpAmount = getLpAmount(userInfo.positionId);
-
 
         pool.totalLpStaked = pool.totalLpStaked.sub(userInfo.amount.sub(newLpAmount));
         userInfo.amount = userInfo.amount.sub(prevLpAmount.sub(newLpAmount));
@@ -236,10 +274,11 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             if (dappILSupply >= diff) {
                 // cover difference from IL, burn BNT
                 dappILSupply = dappILSupply.sub(diff);
-                dappToken.transfer(msg.sender, diff);
-                bntToken.transfer(address(0), networkAmount);
+                dappToken.transfer(msg.sender, targetAmount);
+                bntToken.transfer(address(0x000000000000000000000000000000000000dEaD), networkAmount);
             } else {
                 // if can't afford, only add base amount, compensate with bnt
+                dappToken.transfer(msg.sender, baseAmount);
                 bntToken.transfer(msg.sender, networkAmount);
             }
         }
@@ -272,7 +311,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         dappILSupply = dappILSupply.add(dappILAmount);
     }
 
-    function addPool(uint256 _allocPoint, uint256 _timeLocked) public onlyOwner {
+    function add(uint256 _allocPoint, uint256 _timeLocked) public onlyOwner {
         uint256 lastRewardBlock = block.number > startBlock ? block.number : startBlock;
         totalAllocPoint = totalAllocPoint.add(_allocPoint);
         poolInfo.push(PoolInfo({
