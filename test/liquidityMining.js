@@ -256,7 +256,7 @@ describe("Liquidity mining", function() {
     console.log(`0xdd2fd4581271e230360230f9337d5c0430bf44c0\nDAPP: ${(await dappTokenContract.balanceOf("0xdd2fd4581271e230360230f9337d5c0430bf44c0")).toString()}\nBNT: ${(await bntTokenContract.balanceOf("0xdd2fd4581271e230360230f9337d5c0430bf44c0")).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf("0xdd2fd4581271e230360230f9337d5c0430bf44c0")).toString()}\n`)
     console.log(`0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199\nDAPP: ${(await dappTokenContract.balanceOf("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199")).toString()}\nBNT: ${(await bntTokenContract.balanceOf("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199")).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199")).toString()}\n`)
 
-    await liquidityProtectionSettingsContract.setProtectionDelays(60,6000);
+    await liquidityProtectionSettingsContract.setProtectionDelays(60,200);
     await dappStakingPoolContract.addPool(1000,3*60);
     await dappStakingPoolContract.addPool(1000,6*60);
     await dappStakingPoolContract.addPool(1000,12*60);
