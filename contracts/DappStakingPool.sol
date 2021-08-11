@@ -71,13 +71,50 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
 
         dappToken.approve(address(liquidityProtection), uint(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF));
         poolInfo.push(PoolInfo({
-            allocPoint: 1000,
+            allocPoint: 0,
             timeLocked: 0,
             lastRewardBlock: _startBlock,
             accDappPerShare: 0,
             totalLpStaked: 0
         }));
-        totalAllocPoint = 1000;
+        // 3m*30days*24hours*60min*60s = 90 days in seconds
+        poolInfo.push(PoolInfo({
+            allocPoint: 476,
+            timeLocked: 3*30*24*60*60,
+            lastRewardBlock: _startBlock,
+            accDappPerShare: 0,
+            totalLpStaked: 0
+        }));
+        poolInfo.push(PoolInfo({
+            allocPoint: 952,
+            timeLocked: 6*30*24*60*60,
+            lastRewardBlock: _startBlock,
+            accDappPerShare: 0,
+            totalLpStaked: 0
+        }));
+        poolInfo.push(PoolInfo({
+            allocPoint: 1905,
+            timeLocked: 12*30*24*60*60,
+            lastRewardBlock: _startBlock,
+            accDappPerShare: 0,
+            totalLpStaked: 0
+        }));
+        poolInfo.push(PoolInfo({
+            allocPoint: 2857,
+            timeLocked: 18*30*24*60*60,
+            lastRewardBlock: _startBlock,
+            accDappPerShare: 0,
+            totalLpStaked: 0
+        }));
+        poolInfo.push(PoolInfo({
+            allocPoint: 3810,
+            timeLocked: 24*30*24*60*60,
+            lastRewardBlock: _startBlock,
+            accDappPerShare: 0,
+            totalLpStaked: 0
+        }));
+        // 476 + 952 + 1905 + 2857 + 3810 = 10000
+        totalAllocPoint = 10000;
     }
 
     function getLpAmount(uint positionId) private view returns (uint) {
