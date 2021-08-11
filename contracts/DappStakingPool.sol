@@ -80,35 +80,35 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         // 3m*30days*24hours*60min*60s = 90 days in seconds
         poolInfo.push(PoolInfo({
             allocPoint: 476,
-            timeLocked: 90 days,
+            timeLocked: 3 minutes,
             lastRewardBlock: _startBlock,
             accDappPerShare: 0,
             totalLpStaked: 0
         }));
         poolInfo.push(PoolInfo({
             allocPoint: 952,
-            timeLocked: 120 days,
+            timeLocked: 6 minutes,
             lastRewardBlock: _startBlock,
             accDappPerShare: 0,
             totalLpStaked: 0
         }));
         poolInfo.push(PoolInfo({
             allocPoint: 1905,
-            timeLocked: 240 days,
+            timeLocked: 12 minutes,
             lastRewardBlock: _startBlock,
             accDappPerShare: 0,
             totalLpStaked: 0
         }));
         poolInfo.push(PoolInfo({
             allocPoint: 2857,
-            timeLocked: 540 days,
+            timeLocked: 18 minutes,
             lastRewardBlock: _startBlock,
             accDappPerShare: 0,
             totalLpStaked: 0
         }));
         poolInfo.push(PoolInfo({
             allocPoint: 3810,
-            timeLocked: 720 days,
+            timeLocked: 24 minutes,
             lastRewardBlock: _startBlock,
             accDappPerShare: 0,
             totalLpStaked: 0
