@@ -258,7 +258,7 @@ describe("Liquidity mining", function() {
 
     await liquidityProtectionSettingsContract.setProtectionDelays(60,200);
     await dappTokenContract.connect(addr1).approve(dappStakingPoolContract.address, ethers.utils.parseEther("100000000"));
-    await dappStakingPoolContract.fund(ethers.utils.parseEther("100000"), ethers.utils.parseEther("100000"));
+    await dappStakingPoolContract.fund(ethers.utils.parseEther("140000"), ethers.utils.parseEther("60000"));
   });
 
   // it("Should allow funding dapp rewards and IL", async function() {
