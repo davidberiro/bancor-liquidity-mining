@@ -180,7 +180,6 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
     }
 
     function unstakeDappBnt(uint amount, uint pid) public {
-        updateRewards(pid);
         harvest(pid);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
@@ -252,7 +251,6 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
 
     // portion of total staked, PPM
     function unstakeDapp(uint32 portion, uint pid) public {
-        updateRewards(pid);
         harvest(pid);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
@@ -260,8 +258,6 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
 
         uint prevLpAmount = getLpAmount(userInfo.positionId);
         (uint targetAmount, uint baseAmount, uint networkAmount) = liquidityProtection.removeLiquidityReturn(userInfo.positionId, portion, block.timestamp);
-        console.log(baseAmount);
-        console.log(targetAmount);
         liquidityProtection.removeLiquidity(userInfo.positionId, portion);
         uint diff = targetAmount.sub(baseAmount);
         uint newLpAmount = getLpAmount(userInfo.positionId);
