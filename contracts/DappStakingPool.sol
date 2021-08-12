@@ -27,6 +27,8 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         uint timeLocked;
         uint lastRewardBlock;
         uint accDappPerShare;
+        uint totalDappStaked;
+        uint totalDappBntStaked;
         uint totalLpStaked;
     }
 
@@ -77,14 +79,17 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             timeLocked: 0,
             lastRewardBlock: _startBlock,
             accDappPerShare: 0,
+            totalDappStaked: 0,
+            totalDappBntStaked: 0,
             totalLpStaked: 0
         }));
-        // 3m*30days*24hours*60min*60s = 90 days in seconds
         poolInfo.push(PoolInfo({
             allocPoint: 476,
             timeLocked: 3 minutes,
             lastRewardBlock: _startBlock,
             accDappPerShare: 0,
+            totalDappStaked: 0,
+            totalDappBntStaked: 0,
             totalLpStaked: 0
         }));
         poolInfo.push(PoolInfo({
@@ -92,6 +97,8 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             timeLocked: 6 minutes,
             lastRewardBlock: _startBlock,
             accDappPerShare: 0,
+            totalDappStaked: 0,
+            totalDappBntStaked: 0,
             totalLpStaked: 0
         }));
         poolInfo.push(PoolInfo({
@@ -99,6 +106,8 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             timeLocked: 12 minutes,
             lastRewardBlock: _startBlock,
             accDappPerShare: 0,
+            totalDappStaked: 0,
+            totalDappBntStaked: 0,
             totalLpStaked: 0
         }));
         poolInfo.push(PoolInfo({
@@ -106,6 +115,8 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             timeLocked: 18 minutes,
             lastRewardBlock: _startBlock,
             accDappPerShare: 0,
+            totalDappStaked: 0,
+            totalDappBntStaked: 0,
             totalLpStaked: 0
         }));
         poolInfo.push(PoolInfo({
@@ -113,6 +124,8 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             timeLocked: 24 minutes,
             lastRewardBlock: _startBlock,
             accDappPerShare: 0,
+            totalDappStaked: 0,
+            totalDappBntStaked: 0,
             totalLpStaked: 0
         }));
         // 476 + 952 + 1905 + 2857 + 3810 = 10000
@@ -155,7 +168,9 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             userInfo.pending = userInfo.pending.add(pending);
         }
 
+        // is this right?
         pool.totalLpStaked = pool.totalLpStaked.add(lpAmount);
+        pool.totalDappBntStaked = pool.totalDappBntStaked.add(lpAmount);
         userInfo.positionId = newId;
         userInfo.amount = userInfo.amount.add(lpAmount);
         userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
@@ -175,6 +190,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             userInfo.pending = userInfo.pending.add(pending);
         }
         pool.totalLpStaked = pool.totalLpStaked.add(amount);
+        pool.totalDappBntStaked = pool.totalDappBntStaked.add(amount);
         userInfo.amount = userInfo.amount.add(amount);
         userInfo.lpAmount = userInfo.lpAmount.add(amount);
         userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
@@ -188,6 +204,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         require(userInfo.depositTime + pool.timeLocked <= now, "Still locked");
 
         pool.totalLpStaked = pool.totalLpStaked.sub(amount);
+        pool.totalDappBntStaked = pool.totalDappBntStaked.sub(amount);
         // this line validates user balance
         userInfo.amount = userInfo.amount.sub(amount);
         userInfo.lpAmount = userInfo.lpAmount.sub(amount);
@@ -210,6 +227,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
                 uint positionId = liquidityProtection.addLiquidity(dappBntPoolAnchor, address(dappToken), amount);
                 uint lpAmount = getLpAmount(positionId);
                 pool.totalLpStaked = pool.totalLpStaked.add(lpAmount);
+                pool.totalDappStaked = pool.totalDappStaked.add(lpAmount);
                 userInfo.positionId = positionId;
                 userInfo.amount = lpAmount;
                 userInfo.rewardDebt = lpAmount.mul(pool.accDappPerShare).div(1e12);
@@ -244,6 +262,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             uint postLpAmount = getLpAmount(positionId);
             uint newLpStaked = postLpAmount.sub(prevLpAmount);
             pool.totalLpStaked = pool.totalLpStaked.add(newLpStaked);
+            pool.totalDappStaked = pool.totalDappStaked.add(newLpStaked);
             userInfo.positionId = positionId;
             userInfo.amount = userInfo.amount.add(newLpStaked);
             userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
@@ -265,6 +284,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         uint newLpAmount = getLpAmount(userInfo.positionId);
 
         pool.totalLpStaked = pool.totalLpStaked.sub(userInfo.amount.sub(newLpAmount));
+        pool.totalDappStaked = pool.totalDappStaked.sub(userInfo.amount.sub(newLpAmount));
         userInfo.amount = userInfo.amount.sub(prevLpAmount.sub(newLpAmount));
         userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
 
@@ -317,6 +337,8 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             timeLocked: _timeLocked,
             lastRewardBlock: lastRewardBlock,
             accDappPerShare: 0,
+            totalDappStaked: 0,
+            totalDappBntStaked: 0,
             totalLpStaked: 0
         }));
     }
@@ -327,5 +349,9 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         if (prevAllocPoint != _allocPoint) {
             totalAllocPoint = totalAllocPoint.sub(prevAllocPoint).add(_allocPoint);
         }
+    }
+
+    function setDappPerBlock(uint _dappPerBlock) public onlyOwner {
+        dappPerBlock = _dappPerBlock;
     }
 }
