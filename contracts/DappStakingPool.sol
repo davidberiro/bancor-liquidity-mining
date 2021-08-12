@@ -59,7 +59,8 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         address _dappBntPoolAnchor,
         address _dappToken,
         address _bntToken,
-        uint _startBlock
+        uint _startBlock,
+        uint _dappPerBlock
     ) external initializer {
         __Ownable_init(); 
         liquidityProtection = ILiquidityProtection(_liquidityProtection);
@@ -68,6 +69,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         dappToken = IERC20(_dappToken);
         bntToken = IERC20(_bntToken);
         startBlock = _startBlock;
+        dappPerBlock = _dappPerBlock;
 
         dappToken.approve(address(liquidityProtection), uint(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF));
         poolInfo.push(PoolInfo({
@@ -179,7 +181,6 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
     }
 
     function unstakeDappBnt(uint amount, uint pid) public {
-        updateRewards(pid);
         harvest(pid);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
@@ -251,7 +252,6 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
 
     // portion of total staked, PPM
     function unstakeDapp(uint32 portion, uint pid) public {
-        updateRewards(pid);
         harvest(pid);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
@@ -259,8 +259,6 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
 
         uint prevLpAmount = getLpAmount(userInfo.positionId);
         (uint targetAmount, uint baseAmount, uint networkAmount) = liquidityProtection.removeLiquidityReturn(userInfo.positionId, portion, block.timestamp);
-        console.log(baseAmount);
-        console.log(targetAmount);
         liquidityProtection.removeLiquidity(userInfo.positionId, portion);
         uint diff = targetAmount.sub(baseAmount);
         uint newLpAmount = getLpAmount(userInfo.positionId);
