@@ -59,7 +59,8 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         address _dappBntPoolAnchor,
         address _dappToken,
         address _bntToken,
-        uint _startBlock
+        uint _startBlock,
+        uint _dappPerBlock
     ) external initializer {
         __Ownable_init(); 
         liquidityProtection = ILiquidityProtection(_liquidityProtection);
@@ -68,6 +69,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         dappToken = IERC20(_dappToken);
         bntToken = IERC20(_bntToken);
         startBlock = _startBlock;
+        dappPerBlock = _dappPerBlock;
 
         dappToken.approve(address(liquidityProtection), uint(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF));
         poolInfo.push(PoolInfo({
