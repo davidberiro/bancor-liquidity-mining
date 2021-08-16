@@ -247,7 +247,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
                     // cover difference from IL, burn BNT
                     dappILSupply = dappILSupply.sub(diff);
                     amount = amount.add(targetAmount);
-                    bntToken.transfer(address(0), networkAmount);
+                    bntToken.transfer(address(0x000000000000000000000000000000000000dEaD), networkAmount);
                 } else {
                     // if can't afford, only add base amount, compensate with bnt
                     amount = amount.add(baseAmount);
