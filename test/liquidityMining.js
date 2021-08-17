@@ -264,6 +264,10 @@ describe("Liquidity mining", function() {
     await dappStakingPoolContract.fund(ethers.utils.parseEther("140000"), ethers.utils.parseEther("60000"));
   });
 
+  it("Should allow fork deployment", async function() {
+
+  })
+
 //   it("Should allow funding dapp rewards and IL", async function() {
 //     const prevDappSupply = await dappTokenContract.balanceOf(dappStakingPoolContract.address);
 //     const prevDappILSupply = await dappStakingPoolContract.dappILSupply();
@@ -439,4 +443,4 @@ describe("Liquidity mining", function() {
 //     const userPostDappBalance = await dappTokenContract.balanceOf(user.address);
 //     console.log((userPostDappBalance.sub(userPreDappBalance)).toString());
 //   });
-// });
+});
