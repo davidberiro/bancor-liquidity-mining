@@ -13,6 +13,17 @@ import "hardhat/console.sol";
 contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
     using SafeMath for uint;
 
+    /**
+     * @dev triggered when onTransferPosition completes
+     *
+     * @param newId           new id
+     * @param provider        liquidity provider
+     */
+    event PositionTransferred(
+        uint256 newId,
+        address indexed provider
+    );
+
     struct UserPoolInfo {
         uint amount;
         uint lpAmount;
@@ -174,6 +185,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         userInfo.amount = userInfo.amount.add(lpAmount);
         userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
         userInfo.depositTime = now;
+        emit PositionTransferred(newId, provider);
     }
 
     // if there is no more bnt for single sided staking, users can still

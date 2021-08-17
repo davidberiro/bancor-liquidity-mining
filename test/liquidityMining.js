@@ -230,12 +230,12 @@ describe("Liquidity mining", function() {
     const poolId = await liquidityProtectionContract.callStatic.addLiquidity(dappBntAnchor, dappTokenContract.address, ethers.utils.parseEther("1"), { from: user.address });
     await liquidityProtectionContract.connect(user).addLiquidity(dappBntAnchor, dappTokenContract.address, ethers.utils.parseEther("1"));
     const encodedPid = web3.eth.abi.encodeParameter('uint256', '0');
-    await liquidityProtectionContract.connect(user).transferPositionAndNotify(
+    await expect(liquidityProtectionContract.connect(user).transferPositionAndNotify(
       poolId,
       dappStakingPoolContract.address,
       dappStakingPoolContract.address,
       encodedPid
-    );
+    )).to.emit(dappStakingPoolContract, 'PositionTransferred');
     userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
     expect((userInfo.amount.sub(ethers.utils.parseEther("0.005"))).abs().lt(ethers.utils.parseEther("0.0000001"))).to.be.true;
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
