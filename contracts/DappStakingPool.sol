@@ -168,7 +168,6 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             userInfo.pending = userInfo.pending.add(pending);
         }
 
-        // is this right?
         pool.totalLpStaked = pool.totalLpStaked.add(lpAmount);
         pool.totalDappBntStaked = pool.totalDappBntStaked.add(lpAmount);
         userInfo.positionId = newId;
@@ -227,7 +226,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
                 uint positionId = liquidityProtection.addLiquidity(dappBntPoolAnchor, address(dappToken), amount);
                 uint lpAmount = getLpAmount(positionId);
                 pool.totalLpStaked = pool.totalLpStaked.add(lpAmount);
-                pool.totalDappStaked = pool.totalDappStaked.add(lpAmount);
+                pool.totalDappStaked = pool.totalDappStaked.add(amount);
                 userInfo.positionId = positionId;
                 userInfo.amount = lpAmount;
                 userInfo.rewardDebt = lpAmount.mul(pool.accDappPerShare).div(1e12);
@@ -262,7 +261,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             uint postLpAmount = getLpAmount(positionId);
             uint newLpStaked = postLpAmount.sub(prevLpAmount);
             pool.totalLpStaked = pool.totalLpStaked.add(newLpStaked);
-            pool.totalDappStaked = pool.totalDappStaked.add(newLpStaked);
+            pool.totalDappStaked = pool.totalDappStaked.add(amount);
             userInfo.positionId = positionId;
             userInfo.amount = userInfo.amount.add(newLpStaked);
             userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
@@ -283,8 +282,8 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         uint diff = targetAmount.sub(baseAmount);
         uint newLpAmount = getLpAmount(userInfo.positionId);
 
-        pool.totalLpStaked = pool.totalLpStaked.sub(userInfo.amount.sub(newLpAmount));
-        pool.totalDappStaked = pool.totalDappStaked.sub(userInfo.amount.sub(newLpAmount));
+        pool.totalLpStaked = pool.totalLpStaked.sub(userInfo.amount.sub(userInfo.lpAmount));
+        pool.totalDappStaked = pool.totalDappStaked.sub(targetAmount);
         userInfo.amount = userInfo.amount.sub(prevLpAmount.sub(newLpAmount));
         userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
 
