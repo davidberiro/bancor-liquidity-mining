@@ -262,21 +262,10 @@ describe("Liquidity mining", function() {
     await ethers.provider.send("evm_mine", [ timestamp + 1000 ]);
 
     userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
-    console.log(`amount ${userInfo.amount.toString()}`);
-    console.log(`lpAmount ${userInfo.lpAmount.toString()}`);
-    console.log(`pending ${userInfo.pending.toString()}`);
-    console.log(`rewardDebt ${userInfo.rewardDebt.toString()}`);
     const preDappSupply = await dappTokenContract.balanceOf(addr4.address);
-    console.log(`preDappSupply ${preDappSupply.toString()}`);
     await dappStakingPoolContract.connect(user).harvest(6);
     userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
-    console.log(`amount ${userInfo.amount.toString()}`);
-    console.log(`lpAmount ${userInfo.lpAmount.toString()}`);
-    console.log(`pending ${userInfo.pending.toString()}`);
-    console.log(`rewardDebt ${userInfo.rewardDebt.toString()}`);
     const postDappSupply = await dappTokenContract.balanceOf(addr4.address);
-    console.log(`postDappSupply ${postDappSupply.toString()}`);
-    console.log((postDappSupply.sub(preDappSupply)).toString());
     expect(postDappSupply.sub(preDappSupply).toString()).to.be.above(ethers.utils.parseEther("0"));
   });
 
