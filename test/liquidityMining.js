@@ -142,7 +142,7 @@ describe("Liquidity mining", function() {
       dappTokenContract.address,
       bntAddress,
       blockNumber,
-      1
+      ethers.utils.parseEther("1")
     );
 
     await dappTokenContract.connect(addr2).approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
