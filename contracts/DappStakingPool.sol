@@ -13,6 +13,17 @@ import "hardhat/console.sol";
 contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
     using SafeMath for uint;
 
+    /**
+     * @dev triggered when onTransferPosition completes
+     *
+     * @param newId           new id
+     * @param provider        liquidity provider
+     */
+    event PositionTransferred(
+        uint256 newId,
+        address indexed provider
+    );
+
     struct UserPoolInfo {
         uint amount;
         uint lpAmount;
@@ -174,6 +185,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         userInfo.amount = userInfo.amount.add(lpAmount);
         userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
         userInfo.depositTime = now;
+        emit PositionTransferred(newId, provider);
     }
 
     // if there is no more bnt for single sided staking, users can still
@@ -352,5 +364,18 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
 
     function setDappPerBlock(uint _dappPerBlock) public onlyOwner {
         dappPerBlock = _dappPerBlock;
+    }
+
+    function getPendingRewards(uint256 pid, address user) external view returns (uint256) {
+        UserPoolInfo storage userInfo = userPoolInfo[pid][user];
+        PoolInfo storage pool = poolInfo[pid];
+        uint accDappPerShare = pool.accDappPerShare;
+        uint lpAmount = getLpAmount(pid);
+        if (block.number > pool.lastRewardBlock && lpAmount != 0) {
+            uint multiplier = (block.number).sub(pool.lastRewardBlock);
+            uint dappReward = multiplier.mul(dappPerBlock).mul(pool.allocPoint).div(totalAllocPoint);
+            accDappPerShare = accDappPerShare.add(dappReward.mul(1e12).div(lpAmount));
+        }
+        return userInfo.pending.add(userInfo.amount.mul(accDappPerShare).div(1e12).sub(userInfo.rewardDebt));
     }
 }
