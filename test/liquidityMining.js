@@ -247,7 +247,7 @@ describe("Liquidity mining", function() {
 
     funderContract = await funderFactory.deploy(dappStakingPoolContract.address,dappTokenContract.address,7000);
     await funderContract.deployed();
-    await dappTokenContract.mint(funderContract.address, ethers.utils.parseEther("1000000"));
+    // await dappTokenContract.mint(funderContract.address, ethers.utils.parseEther("1000000"));
     
     console.log(`staking pool: ${dappStakingPoolContract.address}`)
     console.log(`dappBntTokenContract: ${dappBntTokenContract.address}\n`)
