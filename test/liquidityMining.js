@@ -36,10 +36,10 @@ describe("Liquidity mining", function() {
   let dappBntAnchor;
   let liquidityProtectionContract;
   let funderContract;
-  let owner, addr1, addr2, addr3, addrs;
+  let owner, addr1, addr2, addr3, addr4, addrs;
 
   before(async function() {
-    [owner, addr1, addr2, addr3, ...addrs] = await ethers.getSigners();
+    [owner, addr1, addr2, addr3, addr4, ...addrs] = await ethers.getSigners();
 
     // impersonate account w/ permissions to approve converters
     await network.provider.request({
@@ -101,6 +101,7 @@ describe("Liquidity mining", function() {
     await dappTokenContract.mint(addr1.address, ethers.utils.parseEther("100000000000"));
     await dappTokenContract.mint(addr2.address, ethers.utils.parseEther("100000000000"));
     await dappTokenContract.mint(addr3.address, ethers.utils.parseEther("100000000000"));
+    await dappTokenContract.mint(addr4.address, ethers.utils.parseEther("100000000000"));
     const dappConverterContract = new ethers.Contract(
       converterDappBntAddress,
       converterAbi,
@@ -240,9 +241,6 @@ describe("Liquidity mining", function() {
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
   });
 
-  it("Should allow users to claim rewards", async function() {
-  });
-
   it("Should allow admin to add pool", async function() {
     await dappStakingPoolContract.add('2000', '100');
     const poolInfo = await dappStakingPoolContract.poolInfo(6);
@@ -250,6 +248,36 @@ describe("Liquidity mining", function() {
     expect(poolInfo.timeLocked.toString()).to.equal('100');
     expect(poolInfo.accDappPerShare.toString()).to.equal('0');
     expect(poolInfo.totalLpStaked.toString()).to.equal('0');
+  });
+
+  it("Should allow users to claim rewards", async function() {
+    let user = addr4;
+    let userInfo;
+    await dappTokenContract.connect(user).approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
+    await dappStakingPoolContract.connect(user).stakeDapp(ethers.utils.parseEther("1"), 6);
+
+    // advance time
+    const nowBlock = await ethers.provider.getBlockNumber();
+    const timestamp = (await ethers.provider.getBlock(nowBlock)).timestamp;
+    await ethers.provider.send("evm_mine", [ timestamp + 1000 ]);
+
+    userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
+    console.log(`amount ${userInfo.amount.toString()}`);
+    console.log(`lpAmount ${userInfo.lpAmount.toString()}`);
+    console.log(`pending ${userInfo.pending.toString()}`);
+    console.log(`rewardDebt ${userInfo.rewardDebt.toString()}`);
+    const preDappSupply = await dappTokenContract.balanceOf(addr4.address);
+    console.log(`preDappSupply ${preDappSupply.toString()}`);
+    await dappStakingPoolContract.connect(user).harvest(6);
+    userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
+    console.log(`amount ${userInfo.amount.toString()}`);
+    console.log(`lpAmount ${userInfo.lpAmount.toString()}`);
+    console.log(`pending ${userInfo.pending.toString()}`);
+    console.log(`rewardDebt ${userInfo.rewardDebt.toString()}`);
+    const postDappSupply = await dappTokenContract.balanceOf(addr4.address);
+    console.log(`postDappSupply ${postDappSupply.toString()}`);
+    console.log((postDappSupply.sub(preDappSupply)).toString());
+    expect(postDappSupply.sub(preDappSupply).toString()).to.be.above(ethers.utils.parseEther("0"));
   });
 
   it("Should allow staking to timelocked pool", async function() {
