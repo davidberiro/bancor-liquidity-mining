@@ -329,4 +329,10 @@ describe("Liquidity mining", function() {
     const userPostDappBalance = await dappTokenContract.balanceOf(user.address);
     console.log((userPostDappBalance.sub(userPreDappBalance)).toString());
   });
+
+  it("Should allow call getPendingRewards for frontend", async function() {
+    let user = addr2;
+    const pendingRewards = await dappStakingPoolContract.connect(user).getPendingRewards(6, user.address);
+    console.log(pendingRewards.toString());
+  });
 });
