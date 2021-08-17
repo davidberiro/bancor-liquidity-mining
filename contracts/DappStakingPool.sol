@@ -284,7 +284,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         uint newLpAmount = getLpAmount(userInfo.positionId);
 
         pool.totalLpStaked = pool.totalLpStaked.sub(userInfo.amount.sub(newLpAmount));
-        pool.totalDappStaked = pool.totalDappStaked.sub(userInfo.amount.sub(newLpAmount));
+        pool.totalDappStaked = pool.totalDappStaked.sub(targetAmount);
         userInfo.amount = userInfo.amount.sub(prevLpAmount.sub(newLpAmount));
         userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
 
