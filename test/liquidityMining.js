@@ -183,6 +183,50 @@ describe("Liquidity mining", function() {
     expect(postFundDappRewardsSupply).to.equal(ethers.utils.parseEther("800000"));
   });
 
+  it("Should allow transfer position after full unstake", async function() {
+    let user = addr5;
+    let userInfo;
+
+    // stake and  advance time
+    await dappTokenContract.connect(user).approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
+    await dappStakingPoolContract.connect(user).stakeDapp(ethers.utils.parseEther("1"), 0);
+    let nowBlock = await ethers.provider.getBlockNumber();
+    let timestamp = (await ethers.provider.getBlock(nowBlock)).timestamp;
+    await ethers.provider.send("evm_mine", [ timestamp + 1000 ]);
+    
+    // fully unstake
+    await dappStakingPoolContract.connect(user).unstakeDapp('1000000', 0);
+
+    // transfer position and notify
+    userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
+    expect(userInfo.amount).to.equal(ethers.utils.parseEther("0"));
+    expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
+    await dappTokenContract.connect(user).approve(liquidityProtectionContractAddress, ethers.utils.parseEther("10000"));
+    const poolId = await liquidityProtectionContract.callStatic.addLiquidity(dappBntAnchor, dappTokenContract.address, ethers.utils.parseEther("1"), { from: user.address });
+    await liquidityProtectionContract.connect(user).addLiquidity(dappBntAnchor, dappTokenContract.address, ethers.utils.parseEther("1"));
+    const encodedPid = web3.eth.abi.encodeParameter('uint256', '0');
+    await expect(liquidityProtectionContract.connect(user).transferPositionAndNotify(
+      poolId,
+      dappStakingPoolContract.address,
+      dappStakingPoolContract.address,
+      encodedPid
+    )).to.emit(dappStakingPoolContract, 'PositionTransferred');
+    userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
+    expect((userInfo.amount.sub(ethers.utils.parseEther("0.005"))).abs().lt(ethers.utils.parseEther("0.0000001"))).to.be.true;
+    expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
+
+    // advance time
+    nowBlock = await ethers.provider.getBlockNumber();
+    timestamp = (await ethers.provider.getBlock(nowBlock)).timestamp;
+    await ethers.provider.send("evm_mine", [ timestamp + 1000 ]);
+    
+    // unstake
+    await dappStakingPoolContract.connect(user).unstakeDapp('1000000',0); // issue here
+    userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
+    expect(userInfo.amount).to.equal(ethers.utils.parseEther("0"))
+    expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"))
+  });
+
   it("Should allow staking one sided dapp", async function() {
     let user = addr2;
     let userInfo;
@@ -339,49 +383,5 @@ describe("Liquidity mining", function() {
     let user = addr2;
     const pendingRewards = await dappStakingPoolContract.connect(user).getPendingRewards(6, user.address);
     console.log(pendingRewards.toString());
-  });
-
-  it("Should allow transfer position after full unstake", async function() {
-    let user = addr5;
-    let userInfo;
-
-    // stake and  advance time
-    await dappTokenContract.connect(user).approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
-    await dappStakingPoolContract.connect(user).stakeDapp(ethers.utils.parseEther("1"), 6);
-    let nowBlock = await ethers.provider.getBlockNumber();
-    let timestamp = (await ethers.provider.getBlock(nowBlock)).timestamp;
-    await ethers.provider.send("evm_mine", [ timestamp + 1000 ]);
-    
-    // fully unstake
-    await dappStakingPoolContract.connect(user).unstakeDapp('1000000', 6);
-
-    // transfer position and notify
-    userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
-    expect(userInfo.amount).to.equal(ethers.utils.parseEther("0"));
-    expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
-    await dappTokenContract.connect(user).approve(liquidityProtectionContractAddress, ethers.utils.parseEther("10000"));
-    const poolId = await liquidityProtectionContract.callStatic.addLiquidity(dappBntAnchor, dappTokenContract.address, ethers.utils.parseEther("1"), { from: user.address });
-    await liquidityProtectionContract.connect(user).addLiquidity(dappBntAnchor, dappTokenContract.address, ethers.utils.parseEther("1"));
-    const encodedPid = web3.eth.abi.encodeParameter('uint256', '6');
-    await expect(liquidityProtectionContract.connect(user).transferPositionAndNotify(
-      poolId,
-      dappStakingPoolContract.address,
-      dappStakingPoolContract.address,
-      encodedPid
-    )).to.emit(dappStakingPoolContract, 'PositionTransferred');
-    userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
-    expect((userInfo.amount.sub(ethers.utils.parseEther("0.005"))).abs().lt(ethers.utils.parseEther("0.0000001"))).to.be.true;
-    expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
-
-    // advance time
-    nowBlock = await ethers.provider.getBlockNumber();
-    timestamp = (await ethers.provider.getBlock(nowBlock)).timestamp;
-    await ethers.provider.send("evm_mine", [ timestamp + 1000 ]);
-    
-    // unstake
-    await dappStakingPoolContract.connect(user).unstakeDapp('1000000',6);
-    userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
-    expect(userInfo.amount).to.equal(ethers.utils.parseEther("0"))
-    expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"))
   });
 });
