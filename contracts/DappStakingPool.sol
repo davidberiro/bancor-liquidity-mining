@@ -313,6 +313,8 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
                 bntToken.transfer(msg.sender, networkAmount);
             }
         }
+
+        if(userInfo.amount == 0) userInfo.positionId = 0;
     }
 
     function harvest(uint pid) public {
