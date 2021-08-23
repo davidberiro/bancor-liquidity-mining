@@ -223,8 +223,6 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         userInfo.lpAmount = userInfo.lpAmount.sub(amount);
         userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
         IERC20(dappBntPoolAnchor).transfer(msg.sender, amount);
-
-        if(userInfo.amount == 0) userInfo.positionId = 0;
     }
 
     function stakeDapp(uint amount, uint pid) public {
