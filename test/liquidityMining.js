@@ -38,7 +38,8 @@ describe("Liquidity mining", function() {
   let dappBntAnchor;
   let liquidityProtectionContract;
   let funderContract;
-  let owner, addr1, addr2, addr3, addr4, addr5, addrs;
+  let owner, addr1, addr2, addr3, addr4, addr5, addrs,
+    lp1,lp2,lp3,lp4,lp5,lp6, bancorNetworkContract;
 
   before(async function() {
     [owner, addr1, addr2, addr3, addr4, addr5, ...addrs] = await ethers.getSigners();
@@ -59,14 +60,14 @@ describe("Liquidity mining", function() {
       liquidityProtectionStatsAbi,
       addr1
     );
-    console.log((await liquidityProtectionStatsContract.totalPoolAmount(converterDappBntAddress)).toString());
-    console.log((await liquidityProtectionStatsContract.totalReserveAmount(converterDappBntAddress, bntAddress)).toString());
+    // console.log((await liquidityProtectionStatsContract.totalPoolAmount(converterDappBntAddress)).toString());
+    // console.log((await liquidityProtectionStatsContract.totalReserveAmount(converterDappBntAddress, bntAddress)).toString());
     const converterRegistryDataContract = new ethers.Contract(
       converterRegistryDataAddress,
       converterRegistryDataAbi,
       owner
     );
-    const bancorNetworkContract = new ethers.Contract(
+    bancorNetworkContract = new ethers.Contract(
       bancorNetworkAddress,
       bancorNetworkAbi,
       addr1
@@ -165,7 +166,7 @@ describe("Liquidity mining", function() {
       method: "hardhat_impersonateAccount",
       params: ["0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097"],
     });
-    const lp1 = await ethers.getSigner("0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097");
+    lp1 = await ethers.getSigner("0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097");
     await dappTokenContract.connect(lp1).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
     await bntToken.connect(lp1).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
     await dappConverterContract.connect(lp1).addLiquidity(
@@ -178,7 +179,7 @@ describe("Liquidity mining", function() {
       method: "hardhat_impersonateAccount",
       params: ["0xcd3b766ccdd6ae721141f452c550ca635964ce71"],
     });
-    const lp2 = await ethers.getSigner("0xcd3b766ccdd6ae721141f452c550ca635964ce71");
+    lp2 = await ethers.getSigner("0xcd3b766ccdd6ae721141f452c550ca635964ce71");
     await dappTokenContract.connect(lp2).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
     await bntToken.connect(lp2).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
     await dappConverterContract.connect(lp2).addLiquidity(
@@ -191,7 +192,7 @@ describe("Liquidity mining", function() {
       method: "hardhat_impersonateAccount",
       params: ["0x2546bcd3c84621e976d8185a91a922ae77ecec30"],
     });
-    const lp3 = await ethers.getSigner("0x2546bcd3c84621e976d8185a91a922ae77ecec30");
+    lp3 = await ethers.getSigner("0x2546bcd3c84621e976d8185a91a922ae77ecec30");
     await dappTokenContract.connect(lp3).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
     await bntToken.connect(lp3).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
     await dappConverterContract.connect(lp3).addLiquidity(
@@ -204,7 +205,7 @@ describe("Liquidity mining", function() {
       method: "hardhat_impersonateAccount",
       params: ["0xbda5747bfd65f08deb54cb465eb87d40e51b197e"],
     });
-    const lp4 = await ethers.getSigner("0xbda5747bfd65f08deb54cb465eb87d40e51b197e");
+    lp4 = await ethers.getSigner("0xbda5747bfd65f08deb54cb465eb87d40e51b197e");
     await dappTokenContract.connect(lp4).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
     await bntToken.connect(lp4).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
     await dappConverterContract.connect(lp4).addLiquidity(
@@ -217,7 +218,7 @@ describe("Liquidity mining", function() {
       method: "hardhat_impersonateAccount",
       params: ["0xdd2fd4581271e230360230f9337d5c0430bf44c0"],
     });
-    const lp5 = await ethers.getSigner("0xdd2fd4581271e230360230f9337d5c0430bf44c0");
+    lp5 = await ethers.getSigner("0xdd2fd4581271e230360230f9337d5c0430bf44c0");
     await dappTokenContract.connect(lp5).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
     await bntToken.connect(lp5).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
     await dappConverterContract.connect(lp5).addLiquidity(
@@ -230,7 +231,7 @@ describe("Liquidity mining", function() {
       method: "hardhat_impersonateAccount",
       params: ["0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199"],
     });
-    const lp6 = await ethers.getSigner("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199");
+    lp6 = await ethers.getSigner("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199");
     await dappTokenContract.connect(lp6).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
     await bntToken.connect(lp6).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
     await dappConverterContract.connect(lp6).addLiquidity(
@@ -264,19 +265,56 @@ describe("Liquidity mining", function() {
     console.log(`staking pool: ${dappStakingPoolContract.address}`)
     console.log(`dappBntTokenContract: ${dappBntTokenContract.address}\n`)
     
-    console.log(`0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097\nDAPP: ${(await dappTokenContract.balanceOf("0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097")).toString()}\nBNT: ${(await bntTokenContract.balanceOf("0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097")).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf("0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097")).toString()}\n`)
-    console.log(`0xcd3b766ccdd6ae721141f452c550ca635964ce71\nDAPP: ${(await dappTokenContract.balanceOf("0xcd3b766ccdd6ae721141f452c550ca635964ce71")).toString()}\nBNT: ${(await bntTokenContract.balanceOf("0xcd3b766ccdd6ae721141f452c550ca635964ce71")).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf("0xcd3b766ccdd6ae721141f452c550ca635964ce71")).toString()}\n`)
-    console.log(`0x2546bcd3c84621e976d8185a91a922ae77ecec30\nDAPP: ${(await dappTokenContract.balanceOf("0x2546bcd3c84621e976d8185a91a922ae77ecec30")).toString()}\nBNT: ${(await bntTokenContract.balanceOf("0x2546bcd3c84621e976d8185a91a922ae77ecec30")).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf("0x2546bcd3c84621e976d8185a91a922ae77ecec30")).toString()}\n`)
-    console.log(`0xbda5747bfd65f08deb54cb465eb87d40e51b197e\nDAPP: ${(await dappTokenContract.balanceOf("0xbda5747bfd65f08deb54cb465eb87d40e51b197e")).toString()}\nBNT: ${(await bntTokenContract.balanceOf("0xbda5747bfd65f08deb54cb465eb87d40e51b197e")).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf("0xbda5747bfd65f08deb54cb465eb87d40e51b197e")).toString()}\n`)
-    console.log(`0xdd2fd4581271e230360230f9337d5c0430bf44c0\nDAPP: ${(await dappTokenContract.balanceOf("0xdd2fd4581271e230360230f9337d5c0430bf44c0")).toString()}\nBNT: ${(await bntTokenContract.balanceOf("0xdd2fd4581271e230360230f9337d5c0430bf44c0")).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf("0xdd2fd4581271e230360230f9337d5c0430bf44c0")).toString()}\n`)
-    console.log(`0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199\nDAPP: ${(await dappTokenContract.balanceOf("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199")).toString()}\nBNT: ${(await bntTokenContract.balanceOf("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199")).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199")).toString()}\n`)
-
     await liquidityProtectionSettingsContract.setProtectionDelays(60,200);
     await dappTokenContract.connect(addr1).approve(dappStakingPoolContract.address, ethers.utils.parseEther("100000000"));
     await dappStakingPoolContract.fund(ethers.utils.parseEther("140000"), ethers.utils.parseEther("60000"));
 
-    // simulate IL
+    // console.log(`0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097\nDAPP: ${(await dappTokenContract.balanceOf("0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097")).toString()}\nBNT: ${(await bntTokenContract.balanceOf("0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097")).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf("0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097")).toString()}\n`)
+    // console.log(`0xcd3b766ccdd6ae721141f452c550ca635964ce71\nDAPP: ${(await dappTokenContract.balanceOf("0xcd3b766ccdd6ae721141f452c550ca635964ce71")).toString()}\nBNT: ${(await bntTokenContract.balanceOf("0xcd3b766ccdd6ae721141f452c550ca635964ce71")).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf("0xcd3b766ccdd6ae721141f452c550ca635964ce71")).toString()}\n`)
+    // console.log(`0x2546bcd3c84621e976d8185a91a922ae77ecec30\nDAPP: ${(await dappTokenContract.balanceOf("0x2546bcd3c84621e976d8185a91a922ae77ecec30")).toString()}\nBNT: ${(await bntTokenContract.balanceOf("0x2546bcd3c84621e976d8185a91a922ae77ecec30")).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf("0x2546bcd3c84621e976d8185a91a922ae77ecec30")).toString()}\n`)
+    // console.log(`0xbda5747bfd65f08deb54cb465eb87d40e51b197e\nDAPP: ${(await dappTokenContract.balanceOf("0xbda5747bfd65f08deb54cb465eb87d40e51b197e")).toString()}\nBNT: ${(await bntTokenContract.balanceOf("0xbda5747bfd65f08deb54cb465eb87d40e51b197e")).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf("0xbda5747bfd65f08deb54cb465eb87d40e51b197e")).toString()}\n`)
+    // console.log(`0xdd2fd4581271e230360230f9337d5c0430bf44c0\nDAPP: ${(await dappTokenContract.balanceOf("0xdd2fd4581271e230360230f9337d5c0430bf44c0")).toString()}\nBNT: ${(await bntTokenContract.balanceOf("0xdd2fd4581271e230360230f9337d5c0430bf44c0")).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf("0xdd2fd4581271e230360230f9337d5c0430bf44c0")).toString()}\n`)
+    // console.log(`0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199\nDAPP: ${(await dappTokenContract.balanceOf("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199")).toString()}\nBNT: ${(await bntTokenContract.balanceOf("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199")).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199")).toString()}\n`)
+
     await dappTokenContract.connect(addr1).approve(bancorNetworkContract.address, '98999800000000000000000000000');
+    // console.log(`${addr1.address}\nDAPP: ${(await dappTokenContract.balanceOf(addr1.address)).toString()}\nBNT: ${(await bntTokenContract.balanceOf(addr1.address)).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf(addr1.address)).toString()}\n`)
+    // console.log((await liquidityProtectionStatsContract.totalPoolAmount(dappBntTokenContract.address)).toString());
+    // console.log((await liquidityProtectionStatsContract.totalReserveAmount(dappBntTokenContract.address, bntToken.address)).toString());
+  });
+
+  it("Should allow deploy lp", async function() {
+    await dappTokenContract.connect(lp1).approve(dappStakingPoolContract.address, '989998000000000000000000');
+    await dappStakingPoolContract.connect(lp1).stakeDapp('989998000000000000000000', 0);
+  })
+
+  it("Should allow deploy lp", async function() {
+    await dappTokenContract.connect(lp2).approve(dappStakingPoolContract.address, '989998000000000000000000');
+    await dappStakingPoolContract.connect(lp2).stakeDapp('989998000000000000000000', 0);
+  })
+
+  it("Should allow deploy lp", async function() {
+    await dappTokenContract.connect(lp3).approve(dappStakingPoolContract.address, '989998000000000000000000');
+    await dappStakingPoolContract.connect(lp3).stakeDapp('989998000000000000000000', 0);
+  })
+
+  it("Should allow deploy lp", async function() {
+    await dappTokenContract.connect(lp4).approve(dappStakingPoolContract.address, '989998000000000000000000');
+    await dappStakingPoolContract.connect(lp4).stakeDapp('989998000000000000000000', 0);
+  })
+
+  it("Should allow deploy lp", async function() {
+    await dappTokenContract.connect(lp5).approve(dappStakingPoolContract.address, '989998000000000000000000');
+    await dappStakingPoolContract.connect(lp5).stakeDapp('989998000000000000000000', 0);
+  })
+
+  it("Should allow deploy lp", async function() {
+    await dappTokenContract.connect(lp6).approve(dappStakingPoolContract.address, '989998000000000000000000');
+    await dappStakingPoolContract.connect(lp6).stakeDapp('989998000000000000000000', 0);
+  })
+
+  it("IL", async function() {
+    console.log('simulate IL')
+    // simulate IL
     const conversionPath = await bancorNetworkContract.conversionPath(
       dappTokenContract.address,
       bntAddress
@@ -285,9 +323,9 @@ describe("Liquidity mining", function() {
       conversionPath,
       '98999800000000000000000000000'
     );
-    console.log(`${addr1.address}\nDAPP: ${(await dappTokenContract.balanceOf(addr1.address)).toString()}\nBNT: ${(await bntTokenContract.balanceOf(addr1.address)).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf(addr1.address)).toString()}\n`)
-    console.log((await liquidityProtectionStatsContract.totalPoolAmount(dappBntTokenContract.address)).toString());
-    console.log((await liquidityProtectionStatsContract.totalReserveAmount(dappBntTokenContract.address, bntToken.address)).toString());
+    // console.log(`${addr1.address}\nDAPP: ${(await dappTokenContract.balanceOf(addr1.address)).toString()}\nBNT: ${(await bntTokenContract.balanceOf(addr1.address)).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf(addr1.address)).toString()}\n`)
+    // console.log((await liquidityProtectionStatsContract.totalPoolAmount(dappBntTokenContract.address)).toString());
+    // console.log((await liquidityProtectionStatsContract.totalReserveAmount(dappBntTokenContract.address, bntToken.address)).toString());
     await bancorNetworkContract.convertByPath(
       conversionPath,
       '98999800000000000000000000000',
@@ -296,12 +334,5 @@ describe("Liquidity mining", function() {
       zeroAddress,
       '0'
     );
-    console.log(`${addr1.address}\nDAPP: ${(await dappTokenContract.balanceOf(addr1.address)).toString()}\nBNT: ${(await bntTokenContract.balanceOf(addr1.address)).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf(addr1.address)).toString()}\n`)
-    console.log((await liquidityProtectionStatsContract.totalPoolAmount(dappBntTokenContract.address)).toString());
-    console.log((await liquidityProtectionStatsContract.totalReserveAmount(dappBntTokenContract.address, bntToken.address)).toString());
-  });
-
-  it("Should allow fork deployment", async function() {
-
   })
 });
