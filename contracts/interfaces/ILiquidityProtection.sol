@@ -1,10 +1,17 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
 pragma solidity ^0.6.12;
+import "./ILiquidityProtectionStore.sol";
+import "./ILiquidityProtectionStats.sol";
 
 /*
     Liquidity Protection interface
 */
 interface ILiquidityProtection {
+
+    function store() external view returns (ILiquidityProtectionStore);
+
+    function stats() external view returns (ILiquidityProtectionStats);
+
     function addLiquidity(
         address poolAnchor,
         address reserveToken,

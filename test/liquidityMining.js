@@ -4,6 +4,7 @@ const { network, ethers } = require("hardhat");
 const { BigNumber } = require("ethers");
 
 const liquidityProtectionSettingsAbi = require('../abi/ILiquidityProtectionSettings.json');
+const liquidityProtectionStatsAbi = require('../abi/ILiquidityProtectionStats.json');
 const liquidityProtectionAbi = require('../abi/ILiquidityProtection.json');
 const converterRegistryDataAbi = require('../abi/IConverterRegistryData.json');
 const bancorNetworkAbi = require('../abi/IBancorNetwork.json');
@@ -13,6 +14,7 @@ const erc20Abi = require('../abi/IERC20.json');
 const liquidityProtectionSettingsAdminAddress = "0xdfeE8DC240c6CadC2c7f7f9c257c259914dEa84E";
 const liquidityProtectionSettingsContractAddress = "0xF7D28FaA1FE9Ea53279fE6e3Cde75175859bdF46";
 const liquidityProtectionStoreContractAddress = "0xf5FAB5DBD2f3bf675dE4cB76517d4767013cfB55";
+const liquidityProtectionStatsContractAddress = "0x9712bb50dc6efb8a3d7d12cea500a50967d2d471";
 const liquidityProtectionContractAddress = "0x853c2D147a1BD7edA8FE0f58fb3C5294dB07220e";
 const converterDappBntAddress = "0xd3840a74e6111f3d37a93dd67673f3de136e598a";
 const converterRegistryDataAddress = "0x2BF0B9119535a7a5E9a3f8aD1444594845c3A86B";
@@ -52,6 +54,13 @@ describe("Liquidity mining", function() {
       liquidityProtectionSettingsAbi,
       liquidityProtectionSettingsAdminSigner
     );
+    const liquidityProtectionStatsContract = new ethers.Contract(
+      liquidityProtectionStatsContractAddress,
+      liquidityProtectionStatsAbi,
+      addr1
+    );
+    console.log((await liquidityProtectionStatsContract.totalPoolAmount(converterDappBntAddress)).toString());
+    console.log((await liquidityProtectionStatsContract.totalReserveAmount(converterDappBntAddress, bntAddress)).toString());
     const converterRegistryDataContract = new ethers.Contract(
       converterRegistryDataAddress,
       converterRegistryDataAbi,
@@ -144,7 +153,7 @@ describe("Liquidity mining", function() {
 
 
     await dappTokenContract.connect(addr1).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
-    await bntToken.approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
+    await bntToken.connect(addr1).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
     //  1 DAPP ~ 0.007301 BNT
     await dappConverterContract.addLiquidity(
       [dappTokenContract.address, bntAddress],
@@ -265,6 +274,31 @@ describe("Liquidity mining", function() {
     await liquidityProtectionSettingsContract.setProtectionDelays(60,200);
     await dappTokenContract.connect(addr1).approve(dappStakingPoolContract.address, ethers.utils.parseEther("100000000"));
     await dappStakingPoolContract.fund(ethers.utils.parseEther("140000"), ethers.utils.parseEther("60000"));
+
+    // simulate IL
+    await dappTokenContract.connect(addr1).approve(bancorNetworkContract.address, '98999800000000000000000000000');
+    const conversionPath = await bancorNetworkContract.conversionPath(
+      dappTokenContract.address,
+      bntAddress
+    );
+    const rateByPath = await bancorNetworkContract.rateByPath(
+      conversionPath,
+      '98999800000000000000000000000'
+    );
+    console.log(`${addr1.address}\nDAPP: ${(await dappTokenContract.balanceOf(addr1.address)).toString()}\nBNT: ${(await bntTokenContract.balanceOf(addr1.address)).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf(addr1.address)).toString()}\n`)
+    console.log((await liquidityProtectionStatsContract.totalPoolAmount(dappBntTokenContract.address)).toString());
+    console.log((await liquidityProtectionStatsContract.totalReserveAmount(dappBntTokenContract.address, bntToken.address)).toString());
+    await bancorNetworkContract.convertByPath(
+      conversionPath,
+      '98999800000000000000000000000',
+      rateByPath,
+      addr1.address,
+      zeroAddress,
+      '0'
+    );
+    console.log(`${addr1.address}\nDAPP: ${(await dappTokenContract.balanceOf(addr1.address)).toString()}\nBNT: ${(await bntTokenContract.balanceOf(addr1.address)).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf(addr1.address)).toString()}\n`)
+    console.log((await liquidityProtectionStatsContract.totalPoolAmount(dappBntTokenContract.address)).toString());
+    console.log((await liquidityProtectionStatsContract.totalReserveAmount(dappBntTokenContract.address, bntToken.address)).toString());
   });
 
   it("Should allow fork deployment", async function() {
