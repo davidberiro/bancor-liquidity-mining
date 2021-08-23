@@ -96,7 +96,7 @@ describe("Liquidity mining", function() {
 
     await network.provider.send("hardhat_setBalance", [
       dappMinterAddress,
-      "0x10000000000000",
+      "0x20000000000000",
     ]);
     await network.provider.send("hardhat_setBalance", [
       bntOwnerAddress,
@@ -141,6 +141,7 @@ describe("Liquidity mining", function() {
         value: ethers.utils.parseEther("1000")
       }
     );
+
 
     await dappTokenContract.connect(addr1).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
     await bntToken.approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
@@ -241,6 +242,7 @@ describe("Liquidity mining", function() {
       blockNumber,
       ethers.utils.parseEther("1")
     );
+
 
     await dappTokenContract.connect(addr2).approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
     await dappBntTokenContract.connect(addr2).approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
