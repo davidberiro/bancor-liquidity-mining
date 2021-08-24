@@ -312,6 +312,11 @@ describe("Liquidity mining", function() {
     await dappStakingPoolContract.connect(lp6).stakeDapp('989998000000000000000000', 0);
   })
 
+  it("Should mature IL protection", async function() {
+    // advance time
+    await ethers.provider.send("evm_increaseTime", [8640000]); // 100 days in seconds
+  })
+
   it("IL", async function() {
     console.log('simulate IL')
     // simulate IL
