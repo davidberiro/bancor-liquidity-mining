@@ -173,7 +173,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         PoolInfo storage pool = poolInfo[pid];
 
         require(userInfo.positionId == 0, "user already has position in pool");
-        (, address poolToken,, uint lpAmount,,,,) = liquidityProtectionStore.protectedLiquidity(newId);
+        (, address poolToken,, uint lpAmount, uint dappAmount,,,) = liquidityProtectionStore.protectedLiquidity(newId);
         require(poolToken == dappBntPoolAnchor, "wrong position type");
 
         if (userInfo.amount > 0) {
@@ -181,8 +181,8 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             userInfo.pending = userInfo.pending.add(pending);
         }
 
+        pool.totalDappStaked = pool.totalDappStaked.add(dappAmount);
         pool.totalLpStaked = pool.totalLpStaked.add(lpAmount);
-        pool.totalDappBntStaked = pool.totalDappBntStaked.add(lpAmount);
         userInfo.positionId = newId;
         userInfo.amount = userInfo.amount.add(lpAmount);
         userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
