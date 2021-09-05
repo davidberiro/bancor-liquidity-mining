@@ -384,4 +384,12 @@ describe("Liquidity mining", function() {
     const pendingRewards = await dappStakingPoolContract.connect(user).getPendingRewards(6, user.address);
     console.log(pendingRewards.toString());
   });
+
+  it("Should allow refund remaining IL reserve", async function() {
+
+  });
+
+  it("Should allow refund DAPP when IL reserve is 0", async function() {
+    
+  });
 });
