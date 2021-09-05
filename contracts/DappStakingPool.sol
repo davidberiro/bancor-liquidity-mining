@@ -307,13 +307,13 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
                 dappILSupply = dappILSupply.sub(diff);
                 dappToken.transfer(msg.sender, targetAmount);
                 bntToken.transfer(address(0x000000000000000000000000000000000000dEaD), networkAmount);
-            } else if(dappILSupply < diff && dappILSupply > 0) {
+            } else {
                 // if can't afford, only add base amount, compensate with bnt
                 dappToken.transfer(msg.sender, baseAmount);
                 bntToken.transfer(msg.sender, networkAmount);
-            } else if(dappILSupply == 0) {
-                dappToken.transfer(msg.sender, baseAmount);
             }
+        } else {
+            dappToken.transfer(msg.sender, baseAmount);
         }
 
         if(userInfo.amount == 0) userInfo.positionId = 0;
