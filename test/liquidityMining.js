@@ -31,15 +31,15 @@ describe("Liquidity mining", function() {
   const web3 = new Web3();
   let dappTokenContract;
   let bntTokenContract;
-  let dappBntTokenContract;
+  let dappBntTokenContract, bntToken;
   let dappStakingPoolContract;
   let dappBntAnchor;
   let liquidityProtectionContract;
   let funderContract;
-  let owner, addr1, addr2, addr3, addr4, addr5, addrs;
+  let owner, addr1, addr2, addr3, addr4, addr5, addr6, addr7, addrs;
 
   before(async function() {
-    [owner, addr1, addr2, addr3, addr4, addr5, ...addrs] = await ethers.getSigners();
+    [owner, addr1, addr2, addr3, addr4, addr5, addr6, addr7, bancorNetworkContract, ...addrs] = await ethers.getSigners();
 
     // impersonate account w/ permissions to approve converters
     await network.provider.request({
@@ -57,7 +57,7 @@ describe("Liquidity mining", function() {
       converterRegistryDataAbi,
       owner
     );
-    const bancorNetworkContract = new ethers.Contract(
+    bancorNetworkContract = new ethers.Contract(
       bancorNetworkAddress,
       bancorNetworkAbi,
       addr1
@@ -103,6 +103,8 @@ describe("Liquidity mining", function() {
     await dappTokenContract.mint(addr3.address, ethers.utils.parseEther("100000000000"));
     await dappTokenContract.mint(addr4.address, ethers.utils.parseEther("100000000000"));
     await dappTokenContract.mint(addr5.address, ethers.utils.parseEther("100000000000"));
+    await dappTokenContract.mint(addr6.address, ethers.utils.parseEther("100000000000"));
+    await dappTokenContract.mint(addr7.address, ethers.utils.parseEther("100000000000"));
     const dappConverterContract = new ethers.Contract(
       converterDappBntAddress,
       converterAbi,
@@ -111,7 +113,7 @@ describe("Liquidity mining", function() {
     [ dappBntAnchor ] = await converterRegistryDataContract.getConvertibleTokenSmartTokens(dappTokenContract.address);
     await liquidityProtectionSettingsContract.addPoolToWhitelist(dappBntAnchor);
     dappBntTokenContract = await dappTokenFactory.attach(dappBntAnchor);
-    const bntToken = await dappTokenFactory.attach(bntAddress);
+    bntToken = await dappTokenFactory.attach(bntAddress);
     await bancorNetworkContract.convertByPath(
       [bancorEthAddress, ethBntAddress, bntAddress],
       ethers.utils.parseEther("1000"),
@@ -155,7 +157,7 @@ describe("Liquidity mining", function() {
     await dappTokenContract.mint(funderContract.address, ethers.utils.parseEther("1000000"));
   });
 
-  it("Should allow funding dapp rewards and IL", async function() {
+  it.skip("Should allow funding dapp rewards and IL", async function() {
     const prevDappSupply = await dappTokenContract.balanceOf(dappStakingPoolContract.address);
     const prevDappILSupply = await dappStakingPoolContract.dappILSupply();
     const prevDappRewardsSupply = await dappStakingPoolContract.dappRewardsSupply();
@@ -299,7 +301,7 @@ describe("Liquidity mining", function() {
     expect(poolInfo.totalLpStaked.toString()).to.equal('0');
   });
 
-  it("Should allow users to claim rewards", async function() {
+  it.skip("Should allow users to claim rewards", async function() {
     let user = addr4;
     let userInfo;
     await dappTokenContract.connect(user).approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
@@ -386,10 +388,58 @@ describe("Liquidity mining", function() {
   });
 
   it("Should allow refund DAPP and remaining IL reserve", async function() {
+    let user = addr6;
+    let userInfo;
+    console.log(`addr1 ${addr1.address}\nDAPP: ${(await dappTokenContract.balanceOf(addr1.address)).toString()}\nBNT: ${(await bntTokenContract.balanceOf(addr1.address)).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf(addr1.address)).toString()}\n`)
+    console.log(`user ${user.address}\nDAPP: ${(await dappTokenContract.balanceOf(user.address)).toString()}\nBNT: ${(await bntTokenContract.balanceOf(user.address)).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf(user.address)).toString()}\n`)
+    await dappTokenContract.connect(user).approve(dappStakingPoolContract.address, '100000000000000000000000');
+    await dappStakingPoolContract.connect(user).stakeDapp('100000000000000000000000', 6);
 
+    // advance time
+    await ethers.provider.send("evm_increaseTime", [8640000]); // 100 days in seconds
+
+    // simulate IL
+    const conversionPath = await bancorNetworkContract.conversionPath(
+      dappTokenContract.address,
+      bntAddress
+    );
+    console.log('simulate IL - rateByPath')
+    const rateByPath = await bancorNetworkContract.rateByPath(
+      conversionPath,
+      '8911974684313573287562'
+    );
+    await dappTokenContract.connect(addr1).approve(bancorNetworkContract.address, '98999800000000000000000000000');
+    await bntToken.connect(addr1).approve(bancorNetworkContract.address, '8911974684313573287562');
+    // console.log((await liquidityProtectionStatsContract.totalPoolAmount(dappBntTokenContract.address)).toString());
+    // console.log((await liquidityProtectionStatsContract.totalReserveAmount(dappBntTokenContract.address, bntToken.address)).toString());
+    console.log('simulate IL - convertByPath')
+    await bancorNetworkContract.convertByPath(
+      conversionPath,
+      '8911974684313573287562',
+      rateByPath,
+      addr1.address,
+      zeroAddress,
+      '0'
+    );
+
+    userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
+    console.log('preDappIlSupply');
+    console.log(userInfo);
+    console.log(userInfo.amount.toString()/1e18);
+    const preDappIlSupply = await dappStakingPoolContract.dappILSupply();
+    console.log(preDappIlSupply.toString()/1e18);
+    // await dappStakingPoolContract.connect(user).harvest(6);
+    await dappStakingPoolContract.connect(user).unstakeDapp('1000000', 6);
+    userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
+    console.log('postDappIlSupply');
+    console.log(userInfo);
+    console.log(userInfo.amount.toString()/1e18);
+    const postDappIlSupply = await dappStakingPoolContract.dappILSupply();
+    console.log(postDappIlSupply.toString()/1e18);
+    expect(postDappIlSupply.sub(preDappIlSupply).toString()).to.be.above(ethers.utils.parseEther("0"));
   });
 
   it("Should allow refund DAPP when IL reserve is 0", async function() {
-    
+    let user = addr7;
   });
 });
