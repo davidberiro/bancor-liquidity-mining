@@ -277,7 +277,8 @@ describe("Liquidity mining", function() {
     // console.log(`0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199\nDAPP: ${(await dappTokenContract.balanceOf("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199")).toString()}\nBNT: ${(await bntTokenContract.balanceOf("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199")).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199")).toString()}\n`)
 
     await dappTokenContract.connect(addr1).approve(bancorNetworkContract.address, '98999800000000000000000000000');
-    // console.log(`${addr1.address}\nDAPP: ${(await dappTokenContract.balanceOf(addr1.address)).toString()}\nBNT: ${(await bntTokenContract.balanceOf(addr1.address)).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf(addr1.address)).toString()}\n`)
+    await bntToken.connect(addr1).approve(bancorNetworkContract.address, '8911974684313573287562');
+    console.log(`${addr1.address}\nDAPP: ${(await dappTokenContract.balanceOf(addr1.address)).toString()}\nBNT: ${(await bntTokenContract.balanceOf(addr1.address)).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf(addr1.address)).toString()}\n`)
     // console.log((await liquidityProtectionStatsContract.totalPoolAmount(dappBntTokenContract.address)).toString());
     // console.log((await liquidityProtectionStatsContract.totalReserveAmount(dappBntTokenContract.address, bntToken.address)).toString());
   });
@@ -317,27 +318,56 @@ describe("Liquidity mining", function() {
     await ethers.provider.send("evm_increaseTime", [8640000]); // 100 days in seconds
   })
 
-  it("IL", async function() {
-    console.log('simulate IL')
-    // simulate IL
+  // it("test IL downside", async function() {
+  //   console.log('simulate IL')
+  //   // simulate IL downside
+  //   const conversionPath = await bancorNetworkContract.conversionPath(
+  //     dappTokenContract.address,
+  //     bntAddress
+  //   );
+  //   const rateByPath = await bancorNetworkContract.rateByPath(
+  //     conversionPath,
+  //     '98999800000000000000000000000'
+  //   );
+  //   // console.log(`${addr1.address}\nDAPP: ${(await dappTokenContract.balanceOf(addr1.address)).toString()}\nBNT: ${(await bntTokenContract.balanceOf(addr1.address)).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf(addr1.address)).toString()}\n`)
+  //   // console.log((await liquidityProtectionStatsContract.totalPoolAmount(dappBntTokenContract.address)).toString());
+  //   // console.log((await liquidityProtectionStatsContract.totalReserveAmount(dappBntTokenContract.address, bntToken.address)).toString());
+  //   await bancorNetworkContract.convertByPath(
+  //     conversionPath,
+  //     '98999800000000000000000000000',
+  //     rateByPath,
+  //     addr1.address,
+  //     zeroAddress,
+  //     '0'
+  //   );
+  // })
+
+  it("test IL upside", async function() {
+    console.log('simulate IL - conversionPath')
+    // simulate IL upside
     const conversionPath = await bancorNetworkContract.conversionPath(
-      dappTokenContract.address,
-      bntAddress
+      bntAddress,
+      dappTokenContract.address
     );
+    console.log('simulate IL - rateByPath')
     const rateByPath = await bancorNetworkContract.rateByPath(
       conversionPath,
-      '98999800000000000000000000000'
+      '8911974684313573287562'
     );
     // console.log(`${addr1.address}\nDAPP: ${(await dappTokenContract.balanceOf(addr1.address)).toString()}\nBNT: ${(await bntTokenContract.balanceOf(addr1.address)).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf(addr1.address)).toString()}\n`)
     // console.log((await liquidityProtectionStatsContract.totalPoolAmount(dappBntTokenContract.address)).toString());
     // console.log((await liquidityProtectionStatsContract.totalReserveAmount(dappBntTokenContract.address, bntToken.address)).toString());
+    console.log('simulate IL - convertByPath')
     await bancorNetworkContract.convertByPath(
       conversionPath,
-      '98999800000000000000000000000',
+      '8911974684313573287562',
       rateByPath,
       addr1.address,
       zeroAddress,
       '0'
     );
+  })
+
+  it("Should allow deploy", async function() {
   })
 });
