@@ -385,7 +385,7 @@ describe("Liquidity mining", function() {
     console.log(pendingRewards.toString());
   });
 
-  it("Should allow refund remaining IL reserve", async function() {
+  it("Should allow refund DAPP and remaining IL reserve", async function() {
 
   });
 
