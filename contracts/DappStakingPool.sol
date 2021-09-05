@@ -283,21 +283,28 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         }
     }
 
-    // portion of total staked, PPM
-    function unstakeDapp(uint32 portion, uint pid) public {
+    function unstakeDapp(uint pid) public {
         harvest(pid);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
         require(userInfo.depositTime + pool.timeLocked <= now, "Still locked");
 
         uint prevLpAmount = getLpAmount(userInfo.positionId);
-        (uint targetAmount, uint baseAmount, uint networkAmount) = liquidityProtection.removeLiquidityReturn(userInfo.positionId, portion, block.timestamp);
-        liquidityProtection.removeLiquidity(userInfo.positionId, portion);
+        uint preDappAmt = dappToken.balanceOf(address(this));
+        (uint targetAmount, uint baseAmount, uint networkAmount) = liquidityProtection.removeLiquidityReturn(userInfo.positionId, 1000000, block.timestamp);
+        liquidityProtection.removeLiquidity(userInfo.positionId, 1000000);
+        uint postDappAmt = dappToken.balanceOf(address(this));
         uint diff = targetAmount.sub(baseAmount);
         uint newLpAmount = getLpAmount(userInfo.positionId);
 
-        pool.totalLpStaked = pool.totalLpStaked.sub(prevLpAmount.sub(newLpAmount));
-        pool.totalDappStaked = pool.totalDappStaked.sub(targetAmount);
+        console.log('pool.totalDappStaked');
+        console.log(pool.totalDappStaked);
+        console.log('postDappAmt');
+        console.log(postDappAmt);
+        console.log('preDappAmt');
+        console.log(preDappAmt);
+        pool.totalDappStaked = pool.totalDappStaked.sub(postDappAmt.sub(preDappAmt));
+        console.log(pool.totalDappStaked);
         userInfo.amount = userInfo.amount.sub(prevLpAmount.sub(newLpAmount));
         userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
 
