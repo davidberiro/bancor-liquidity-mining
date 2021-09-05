@@ -197,7 +197,7 @@ describe("Liquidity mining", function() {
     await ethers.provider.send("evm_mine", [ timestamp + 1000 ]);
     
     // fully unstake
-    await dappStakingPoolContract.connect(user).unstakeDapp('1000000', 0);
+    await dappStakingPoolContract.connect(user).unstakeDapp(0);
 
     // transfer position and notify
     userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
@@ -223,7 +223,7 @@ describe("Liquidity mining", function() {
     await ethers.provider.send("evm_mine", [ timestamp + 1000 ]);
     
     // unstake
-    await dappStakingPoolContract.connect(user).unstakeDapp('1000000',0); // issue here
+    await dappStakingPoolContract.connect(user).unstakeDapp(0); // issue here
     userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
     expect(userInfo.amount).to.equal(ethers.utils.parseEther("0"))
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"))
@@ -286,7 +286,7 @@ describe("Liquidity mining", function() {
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
     
     // unstake
-    await dappStakingPoolContract.connect(user).unstakeDapp('1000000',0);
+    await dappStakingPoolContract.connect(user).unstakeDapp(0);
     userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
     expect(userInfo.amount).to.equal(ethers.utils.parseEther("0"))
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"))
@@ -336,7 +336,7 @@ describe("Liquidity mining", function() {
     let user = addr2;
     let failed = false;
     try {
-      await dappStakingPoolContract.connect(user).unstakeDapp('1000000', 6);
+      await dappStakingPoolContract.connect(user).unstakeDapp(6);
     } catch (e) {
       failed = true;
     }
@@ -351,7 +351,7 @@ describe("Liquidity mining", function() {
     const timestamp = (await ethers.provider.getBlock(nowBlock)).timestamp;
     await ethers.provider.send("evm_mine", [ timestamp + 1000 ]);
 
-    await dappStakingPoolContract.connect(user).unstakeDapp('1000000', 6);
+    await dappStakingPoolContract.connect(user).unstakeDapp(6);
     userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
     expect(userInfo.amount).to.equal(ethers.utils.parseEther("0"));
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
@@ -371,7 +371,7 @@ describe("Liquidity mining", function() {
     const userPreDappBalance = await dappTokenContract.balanceOf(user.address);
     userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
     // failing, should pass
-    await dappStakingPoolContract.connect(user).unstakeDapp('1000000', 6);
+    await dappStakingPoolContract.connect(user).unstakeDapp(6);
     await dappStakingPoolContract.connect(user).unstakeDappBnt('1000000000000000000', 6);
     userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
     userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
@@ -429,7 +429,7 @@ describe("Liquidity mining", function() {
     const preDappIlSupply = await dappStakingPoolContract.dappILSupply();
     console.log(preDappIlSupply.toString()/1e18);
     // await dappStakingPoolContract.connect(user).harvest(6);
-    await dappStakingPoolContract.connect(user).unstakeDapp('1000000', 6);
+    await dappStakingPoolContract.connect(user).unstakeDapp(6);
     userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
     console.log('postDappIlSupply');
     console.log(userInfo);
