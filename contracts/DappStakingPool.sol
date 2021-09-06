@@ -230,8 +230,6 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         dappToken.transferFrom(msg.sender, address(this), amount);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
-        console.log('amount to stake');
-        console.log(amount/1e18);
 
         // scoping for stack too deep error
         {
@@ -244,7 +242,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
                 pool.totalLpStaked = pool.totalLpStaked.add(lpAmount);
                 pool.totalDappStaked = pool.totalDappStaked.add(amount);
                 userInfo.positionId = positionId;
-                userInfo.amount = lpAmount;
+                userInfo.amount = amount;
                 userInfo.rewardDebt = lpAmount.mul(pool.accDappPerShare).div(1e12);
                 userInfo.depositTime = now;
                 return;
@@ -272,8 +270,6 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
                 amount = amount.add(targetAmount);
             }
         }
-        console.log('before userInfo.amount');
-        console.log(userInfo.amount/1e18);
         {
             uint positionId = liquidityProtection.addLiquidity(dappBntPoolAnchor, address(dappToken), amount);
             uint postLpAmount = getLpAmount(positionId);
@@ -285,8 +281,6 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
             userInfo.depositTime = now;
         }
-        console.log('new userInfo.amount');
-        console.log(userInfo.amount/1e18);
     }
 
     function unstakeDapp(uint pid) public {
@@ -333,6 +327,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
                 console.log(baseAmount/1e18);
                 console.log("DAPP balance");
                 console.log(dappToken.balanceOf(address(this))/1e18);
+                console.log(baseAmount >= dappToken.balanceOf(address(this)));
                 dappToken.transfer(msg.sender, baseAmount);
                 bntToken.transfer(msg.sender, networkAmount);
             }
