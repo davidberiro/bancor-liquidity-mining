@@ -231,6 +231,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         dappToken.transferFrom(msg.sender, address(this), amount);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
+        uint calcAmount;
 
         // scoping for stack too deep error
         {
@@ -261,24 +262,23 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
                 if (dappILSupply >= diff) {
                     // cover difference from IL, burn BNT
                     dappILSupply = dappILSupply.sub(diff);
-                    amount = amount.add(targetAmount);
+                    calcAmount = amount.add(targetAmount);
                     bntToken.transfer(address(0x000000000000000000000000000000000000dEaD), networkAmount);
                 } else {
                     // if can't afford, only add base amount, compensate with bnt
-                    amount = amount.add(baseAmount);
+                    calcAmount = amount.add(baseAmount);
                     bntToken.transfer(msg.sender, networkAmount);
                 }
             } else {
-                amount = amount.add(targetAmount);
+                calcAmount = amount.add(targetAmount);
             }
         }
         {
-            uint positionId = liquidityProtection.addLiquidity(dappBntPoolAnchor, address(dappToken), amount);
+            uint positionId = liquidityProtection.addLiquidity(dappBntPoolAnchor, address(dappToken), calcAmount);
             uint postLpAmount = getLpAmount(positionId);
             uint newLpStaked = postLpAmount.sub(prevLpAmount);
             pool.totalLpStaked = pool.totalLpStaked.add(newLpStaked);
             pool.totalDappStaked = pool.totalDappStaked.add(amount);
-            // amount re assigned, why use new value?
             userInfo.dappStaked = userInfo.dappStaked.add(amount);
             userInfo.positionId = positionId;
             userInfo.amount = userInfo.amount.add(newLpStaked);
