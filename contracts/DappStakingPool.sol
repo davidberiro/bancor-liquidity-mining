@@ -184,6 +184,8 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         pool.totalDappStaked = pool.totalDappStaked.add(dappAmount);
         pool.totalLpStaked = pool.totalLpStaked.add(lpAmount);
         userInfo.positionId = newId;
+        // can someone transfer 2 sided position?  If so wouldn't
+        // it be lpAmount being modified?
         userInfo.amount = userInfo.amount.add(lpAmount);
         userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
         userInfo.depositTime = now;
@@ -277,7 +279,9 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             pool.totalLpStaked = pool.totalLpStaked.add(newLpStaked);
             pool.totalDappStaked = pool.totalDappStaked.add(amount);
             userInfo.positionId = positionId;
-            userInfo.amount = userInfo.amount.add(newLpStaked);
+            // if tracking amount as DAPP + LP token stake
+            // then should add amount no?
+            userInfo.amount = userInfo.amount.add(amount);
             userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
             userInfo.depositTime = now;
         }
@@ -290,19 +294,14 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         require(userInfo.depositTime + pool.timeLocked <= now, "Still locked");
 
         uint prevLpAmount = getLpAmount(userInfo.positionId);
-        uint preDappAmt = dappToken.balanceOf(address(this));
         (uint targetAmount, uint baseAmount, uint networkAmount) = liquidityProtection.removeLiquidityReturn(userInfo.positionId, 1000000, block.timestamp);
         liquidityProtection.removeLiquidity(userInfo.positionId, 1000000);
-        uint postDappAmt = dappToken.balanceOf(address(this));
         uint diff = targetAmount.sub(baseAmount);
         uint newLpAmount = getLpAmount(userInfo.positionId);
 
+        pool.totalLpStaked = pool.totalLpStaked.sub(prevLpAmount.sub(newLpAmount));
         console.log('pool.totalDappStaked before');
         console.log(pool.totalDappStaked/1e18);
-        console.log('postDappAmt');
-        console.log(postDappAmt/1e18);
-        console.log('preDappAmt');
-        console.log(preDappAmt/1e18);
         console.log('userInfo.amount');
         console.log(userInfo.amount/1e18);
         console.log('userInfo.lpAmount');
@@ -310,9 +309,10 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         pool.totalDappStaked = pool.totalDappStaked.sub(userInfo.amount.sub(userInfo.lpAmount));
         console.log('pool.totalDappStaked after');
         console.log(pool.totalDappStaked/1e18);
+        // should sub DAPP stake
         userInfo.amount = userInfo.amount.sub(prevLpAmount.sub(newLpAmount));
-        console.log('userInfo.amount updated');
-        console.log(userInfo.amount/1e18);
+        console.log('prevLpAmount.sub(newLpAmount)');
+        console.log(prevLpAmount.sub(newLpAmount)/1e18);
         userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
 
         if (diff > 0) {
@@ -334,8 +334,9 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         } else {
             dappToken.transfer(msg.sender, baseAmount);
         }
-
-        if(userInfo.amount == 0) userInfo.positionId = 0;
+        
+        userInfo.amount = 0;
+        userInfo.positionId = 0;
     }
 
     function harvest(uint pid) public {
