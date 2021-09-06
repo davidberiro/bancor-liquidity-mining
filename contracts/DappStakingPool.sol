@@ -294,9 +294,16 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         require(userInfo.depositTime + pool.timeLocked <= now, "Still locked");
 
         uint prevLpAmount = getLpAmount(userInfo.positionId);
-        (uint targetAmount, uint baseAmount, uint networkAmount) = liquidityProtection.removeLiquidityReturn(userInfo.positionId, 1000000, block.timestamp);
+        uint preDappBal = dappToken.balanceOf(address(this));
+        uint preBntBal = bntToken.balanceOf(address(this));
         liquidityProtection.removeLiquidity(userInfo.positionId, 1000000);
-        uint diff = targetAmount.sub(baseAmount);
+        uint postDappBal = dappToken.balanceOf(address(this));
+        uint postBntBal = bntToken.balanceOf(address(this));
+        // can this go negative for math overflow?
+        // if I stake 100 tokens and get 50 back, will be negative
+        // as an int, do max amounts still work?
+        uint receivedDapp = postDappBal.sub(preDappBal);
+        uint receivedBnt = postBntBal.sub(preBntBal);
         uint newLpAmount = getLpAmount(userInfo.positionId);
 
         pool.totalLpStaked = pool.totalLpStaked.sub(prevLpAmount.sub(newLpAmount));
@@ -304,16 +311,39 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         userInfo.amount = userInfo.amount.sub(prevLpAmount.sub(newLpAmount));
         userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
 
-        if (diff > 0) {
+        // if received dapp < staked, attempt to cover IL
+        // if IL supply can cover in full, do so, burn any received BNT
+        // if IL supply cannot and BNT received, send dapp received and bnt received
+        // if IL supply cannot and no BNT received, send dapp received + remaining IL if any
+        if(receivedDapp < userInfo.dappStaked) {
+            uint diff = userInfo.dappStaked.sub(receivedDapp);
             if (dappILSupply >= diff) {
                 // cover difference from IL, burn BNT
                 dappILSupply = dappILSupply.sub(diff);
-                dappToken.transfer(msg.sender, targetAmount);
-                bntToken.transfer(address(0x000000000000000000000000000000000000dEaD), networkAmount);
+                dappToken.transfer(msg.sender, receivedDapp);
+                
+                if(receivedBnt > 0) {
+                    bntToken.transfer(address(0x000000000000000000000000000000000000dEaD), receivedBnt);
+                }
             } else {
-                // if can't afford, only add base amount, compensate with bnt
-                dappToken.transfer(msg.sender, userInfo.dappStaked);
-                bntToken.transfer(msg.sender, networkAmount);
+                // if receive BNT, send as coverage
+                // if no BNT received, empty remaining IL
+                // if no BNT and no IL, send received
+                uint dappTokenAmt = receivedDapp;
+                if(receivedBnt > 0) {
+                    bntToken.transfer(msg.sender, receivedBnt);
+                } else {
+                    // add remaining IL
+                    dappTokenAmt.add(dappILSupply);
+                    dappILSupply = 0;
+                }
+                dappToken.transfer(msg.sender, dappTokenAmt);
+            }
+        } else {
+            dappToken.transfer(msg.sender, receivedDapp);
+            // not sure this line is needed, if there is no IL, should be no compensated BNT
+            if(receivedBnt > 0) {
+                bntToken.transfer(address(0x000000000000000000000000000000000000dEaD), receivedBnt);
             }
         }
 
