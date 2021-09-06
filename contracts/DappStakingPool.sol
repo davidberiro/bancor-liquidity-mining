@@ -299,9 +299,6 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         liquidityProtection.removeLiquidity(userInfo.positionId, 1000000);
         uint postDappBal = dappToken.balanceOf(address(this));
         uint postBntBal = bntToken.balanceOf(address(this));
-        // can this go negative for math overflow?
-        // if I stake 100 tokens and get 50 back, will be negative
-        // as an int, do max amounts still work?
         uint receivedDapp = postDappBal.sub(preDappBal);
         uint receivedBnt = postBntBal.sub(preBntBal);
         uint newLpAmount = getLpAmount(userInfo.positionId);
@@ -328,12 +325,11 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             } else {
                 // if receive BNT, send as coverage
                 // if no BNT received, empty remaining IL
-                // if no BNT and no IL, send received
                 uint dappTokenAmt = receivedDapp;
                 if(receivedBnt > 0) {
                     bntToken.transfer(msg.sender, receivedBnt);
                 } else {
-                    // add remaining IL
+                    // compensate with remaining IL
                     dappTokenAmt.add(dappILSupply);
                     dappILSupply = 0;
                 }
