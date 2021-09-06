@@ -15,6 +15,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
 
     struct UserPoolInfo {
         uint amount;
+        uint dappStaked;
         uint lpAmount;
         uint pending;
         uint rewardDebt;
@@ -184,8 +185,6 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         pool.totalDappStaked = pool.totalDappStaked.add(dappAmount);
         pool.totalLpStaked = pool.totalLpStaked.add(lpAmount);
         userInfo.positionId = newId;
-        // can someone transfer 2 sided position?  If so wouldn't
-        // it be lpAmount being modified?
         userInfo.amount = userInfo.amount.add(lpAmount);
         userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
         userInfo.depositTime = now;
@@ -244,7 +243,8 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
                 pool.totalLpStaked = pool.totalLpStaked.add(lpAmount);
                 pool.totalDappStaked = pool.totalDappStaked.add(amount);
                 userInfo.positionId = positionId;
-                userInfo.amount = amount;
+                userInfo.amount = lpAmount;
+                userInfo.dappStaked = amount;
                 userInfo.rewardDebt = lpAmount.mul(pool.accDappPerShare).div(1e12);
                 userInfo.depositTime = now;
                 return;
@@ -278,10 +278,10 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             uint newLpStaked = postLpAmount.sub(prevLpAmount);
             pool.totalLpStaked = pool.totalLpStaked.add(newLpStaked);
             pool.totalDappStaked = pool.totalDappStaked.add(amount);
+            // amount re assigned, why use new value?
+            userInfo.dappStaked = userInfo.dappStaked.add(amount);
             userInfo.positionId = positionId;
-            // if tracking amount as DAPP + LP token stake
-            // then should add amount no?
-            userInfo.amount = userInfo.amount.add(amount);
+            userInfo.amount = userInfo.amount.add(newLpStaked);
             userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
             userInfo.depositTime = now;
         }
@@ -300,19 +300,8 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         uint newLpAmount = getLpAmount(userInfo.positionId);
 
         pool.totalLpStaked = pool.totalLpStaked.sub(prevLpAmount.sub(newLpAmount));
-        console.log('pool.totalDappStaked before');
-        console.log(pool.totalDappStaked/1e18);
-        console.log('userInfo.amount');
-        console.log(userInfo.amount/1e18);
-        console.log('userInfo.lpAmount');
-        console.log(userInfo.lpAmount/1e18);
-        pool.totalDappStaked = pool.totalDappStaked.sub(userInfo.amount.sub(userInfo.lpAmount));
-        console.log('pool.totalDappStaked after');
-        console.log(pool.totalDappStaked/1e18);
-        // should sub DAPP stake
+        pool.totalDappStaked = pool.totalDappStaked.sub(userInfo.dappStaked);
         userInfo.amount = userInfo.amount.sub(prevLpAmount.sub(newLpAmount));
-        console.log('prevLpAmount.sub(newLpAmount)');
-        console.log(prevLpAmount.sub(newLpAmount)/1e18);
         userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
 
         if (diff > 0) {
@@ -323,20 +312,14 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
                 bntToken.transfer(address(0x000000000000000000000000000000000000dEaD), networkAmount);
             } else {
                 // if can't afford, only add base amount, compensate with bnt
-                console.log("baseAmount");
-                console.log(baseAmount/1e18);
-                console.log("DAPP balance");
-                console.log(dappToken.balanceOf(address(this))/1e18);
-                console.log(baseAmount >= dappToken.balanceOf(address(this)));
-                dappToken.transfer(msg.sender, baseAmount);
+                dappToken.transfer(msg.sender, userInfo.dappStaked);
                 bntToken.transfer(msg.sender, networkAmount);
             }
-        } else {
-            dappToken.transfer(msg.sender, baseAmount);
         }
-        
-        userInfo.amount = 0;
-        userInfo.positionId = 0;
+
+        userInfo.dappStaked = 0;
+
+        if(userInfo.amount == 0) userInfo.positionId = 0;
     }
 
     function harvest(uint pid) public {
