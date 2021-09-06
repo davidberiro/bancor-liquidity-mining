@@ -230,6 +230,8 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         dappToken.transferFrom(msg.sender, address(this), amount);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
+        console.log('amount to stake');
+        console.log(amount/1e18);
 
         // scoping for stack too deep error
         {
@@ -270,6 +272,8 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
                 amount = amount.add(targetAmount);
             }
         }
+        console.log('before userInfo.amount');
+        console.log(userInfo.amount/1e18);
         {
             uint positionId = liquidityProtection.addLiquidity(dappBntPoolAnchor, address(dappToken), amount);
             uint postLpAmount = getLpAmount(positionId);
@@ -281,6 +285,8 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
             userInfo.depositTime = now;
         }
+        console.log('new userInfo.amount');
+        console.log(userInfo.amount/1e18);
     }
 
     function unstakeDapp(uint pid) public {
@@ -297,15 +303,22 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         uint diff = targetAmount.sub(baseAmount);
         uint newLpAmount = getLpAmount(userInfo.positionId);
 
-        console.log('pool.totalDappStaked');
-        console.log(pool.totalDappStaked);
+        console.log('pool.totalDappStaked before');
+        console.log(pool.totalDappStaked/1e18);
         console.log('postDappAmt');
-        console.log(postDappAmt);
+        console.log(postDappAmt/1e18);
         console.log('preDappAmt');
-        console.log(preDappAmt);
-        pool.totalDappStaked = pool.totalDappStaked.sub(postDappAmt.sub(preDappAmt));
-        console.log(pool.totalDappStaked);
+        console.log(preDappAmt/1e18);
+        console.log('userInfo.amount');
+        console.log(userInfo.amount/1e18);
+        console.log('userInfo.lpAmount');
+        console.log(userInfo.lpAmount/1e18);
+        pool.totalDappStaked = pool.totalDappStaked.sub(userInfo.amount.sub(userInfo.lpAmount));
+        console.log('pool.totalDappStaked after');
+        console.log(pool.totalDappStaked/1e18);
         userInfo.amount = userInfo.amount.sub(prevLpAmount.sub(newLpAmount));
+        console.log('userInfo.amount updated');
+        console.log(userInfo.amount/1e18);
         userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
 
         if (diff > 0) {
@@ -316,6 +329,10 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
                 bntToken.transfer(address(0x000000000000000000000000000000000000dEaD), networkAmount);
             } else {
                 // if can't afford, only add base amount, compensate with bnt
+                console.log("baseAmount");
+                console.log(baseAmount/1e18);
+                console.log("DAPP balance");
+                console.log(dappToken.balanceOf(address(this))/1e18);
                 dappToken.transfer(msg.sender, baseAmount);
                 bntToken.transfer(msg.sender, networkAmount);
             }
