@@ -409,6 +409,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         dappPerBlock = _dappPerBlock;
     }
 
+    // user must wait 24 hours for BNT to unlock, after can call and receive
     function claimBnt(uint pid) public {
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         liquidityProtection.claimBalance(0,2);
@@ -419,10 +420,10 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
     // if pending bnt to burn, call claim, burn total balance sent
     function burnBnt() public {
         if(pendingBntIlBurn > 0) {
-            liquidityProtection.claimBalance(0,2);
             uint preBntBal = bntToken.balanceOf(address(this));
-            bntToken.transfer(address(0x000000000000000000000000000000000000dEaD), pendingBntIlBurn);
+            liquidityProtection.claimBalance(0,2);
             uint postBntBal = bntToken.balanceOf(address(this));
+            bntToken.transfer(address(0x000000000000000000000000000000000000dEaD), postBntBal.sub(preBntBal));
             pendingBntIlBurn = pendingBntIlBurn.sub(postBntBal.sub(preBntBal));
         }
     }
