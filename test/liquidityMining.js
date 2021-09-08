@@ -521,4 +521,8 @@ describe("Liquidity mining", function() {
   it("Should allow refund principle when IL reserve is 0 and 0 BNT IL", async function() {
 
   });
+
+  it("Should burn pending BNT IL", async function() {
+
+  });
 });

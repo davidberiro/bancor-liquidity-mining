@@ -416,4 +416,15 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         userInfo.claimableBnt = 0;
     }
 
+    // if pending bnt to burn, call claim, burn total balance sent
+    function burnBnt() public {
+        if(pendingBntIlBurn > 0) {
+            liquidityProtection.claimBalance(0,2);
+            uint preBntBal = bntToken.balanceOf(address(this));
+            bntToken.transfer(msg.sender, pendingBntIlBurn);
+            uint postBntBal = bntToken.balanceOf(address(this));
+            pendingBntIlBurn = pendingBntIlBurn.sub(postBntBal.sub(preBntBal));
+        }
+    }
+
 }
