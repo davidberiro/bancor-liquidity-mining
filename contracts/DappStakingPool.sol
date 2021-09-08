@@ -421,7 +421,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         if(pendingBntIlBurn > 0) {
             liquidityProtection.claimBalance(0,2);
             uint preBntBal = bntToken.balanceOf(address(this));
-            bntToken.transfer(msg.sender, pendingBntIlBurn);
+            bntToken.transfer(address(0x000000000000000000000000000000000000dEaD), pendingBntIlBurn);
             uint postBntBal = bntToken.balanceOf(address(this));
             pendingBntIlBurn = pendingBntIlBurn.sub(postBntBal.sub(preBntBal));
         }
