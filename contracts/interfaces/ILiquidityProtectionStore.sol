@@ -18,5 +18,9 @@ interface ILiquidityProtectionStore {
             uint256,
             uint256
         );
+    function lockedBalanceCount(address _provider) 
+        external 
+        view 
+        returns (uint256);
 }
 

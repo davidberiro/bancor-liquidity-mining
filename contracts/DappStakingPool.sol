@@ -21,6 +21,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         uint rewardDebt;
         uint positionId;
         uint depositTime;
+        uint claimableBnt;
     }
 
     struct PoolInfo {
@@ -47,6 +48,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
 
     uint public dappILSupply; // amount of DAPP held by contract to cover IL
     uint public dappRewardsSupply; // amount of DAPP held by contract to cover rewards
+    uint public pendingBntIlBurn; // BNT to be burned after 24hr lockup
 
     PoolInfo[] public poolInfo;
     mapping (uint => mapping (address => UserPoolInfo)) public userPoolInfo;
@@ -295,12 +297,15 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
 
         uint prevLpAmount = getLpAmount(userInfo.positionId);
         uint preDappBal = dappToken.balanceOf(address(this));
-        uint preBntBal = bntToken.balanceOf(address(this));
+        console.log('locked balance');
+        console.log(liquidityProtectionStore.lockedBalanceCount(address(this)));
+        (uint targetAmount, uint baseAmount, uint networkAmount) = liquidityProtection.removeLiquidityReturn(userInfo.positionId, 1000000, block.timestamp);
+        console.log('networkAmount');
+        console.log(networkAmount);
         liquidityProtection.removeLiquidity(userInfo.positionId, 1000000);
         uint postDappBal = dappToken.balanceOf(address(this));
-        uint postBntBal = bntToken.balanceOf(address(this));
-        uint receivedDapp = postDappBal.sub(preDappBal);
-        uint receivedBnt = postBntBal.sub(preBntBal);
+        // uint receivedDapp = postDappBal.sub(preDappBal);
+        // uint receivedBnt = postBntBal.sub(preBntBal);
         uint newLpAmount = getLpAmount(userInfo.positionId);
 
         pool.totalLpStaked = pool.totalLpStaked.sub(prevLpAmount.sub(newLpAmount));
@@ -312,22 +317,28 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         // if IL supply can cover in full, do so, burn any received BNT
         // if IL supply cannot and BNT received, send dapp received and bnt received
         // if IL supply cannot and no BNT received, send dapp received + remaining IL if any
-        if(receivedDapp < userInfo.dappStaked) {
-            uint diff = userInfo.dappStaked.sub(receivedDapp);
+        if(postDappBal.sub(preDappBal) < userInfo.dappStaked) {
+            uint diff = userInfo.dappStaked.sub(postDappBal.sub(preDappBal));
             if (dappILSupply >= diff) {
+                // console.log("if (dappILSupply >= diff) {");
+                // console.log(dappILSupply/1e18);
+                // console.log(diff/1e18);
+                // console.log((dappILSupply.sub(diff))/1e18);
                 // cover difference from IL, burn BNT
                 dappILSupply = dappILSupply.sub(diff);
-                dappToken.transfer(msg.sender, receivedDapp);
+                // console.log(dappILSupply/1e18);
+                dappToken.transfer(msg.sender, postDappBal.sub(preDappBal).add(diff));
                 
-                if(receivedBnt > 0) {
-                    bntToken.transfer(address(0x000000000000000000000000000000000000dEaD), receivedBnt);
-                }
+                // log pending rewards to burn
+                pendingBntIlBurn = pendingBntIlBurn.add(networkAmount);
             } else {
-                // if receive BNT, send as coverage
+                console.log("else");
+                // if networkAmount > 0 for BNT, add to pending
                 // if no BNT received, empty remaining IL
-                uint dappTokenAmt = receivedDapp;
-                if(receivedBnt > 0) {
-                    bntToken.transfer(msg.sender, receivedBnt);
+                uint dappTokenAmt = postDappBal.sub(preDappBal);
+                if(networkAmount > 0) {
+                    // log pending BNT IL to claim
+                    userInfo.claimableBnt = userInfo.claimableBnt.add(networkAmount);
                 } else {
                     // compensate with remaining IL
                     dappTokenAmt.add(dappILSupply);
@@ -336,11 +347,8 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
                 dappToken.transfer(msg.sender, dappTokenAmt);
             }
         } else {
-            dappToken.transfer(msg.sender, receivedDapp);
-            // not sure this line is needed, if there is no IL, should be no compensated BNT
-            if(receivedBnt > 0) {
-                bntToken.transfer(address(0x000000000000000000000000000000000000dEaD), receivedBnt);
-            }
+            console.log("big else");
+            dappToken.transfer(msg.sender, postDappBal.sub(preDappBal));
         }
 
         userInfo.dappStaked = 0;
@@ -399,6 +407,13 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
 
     function setDappPerBlock(uint _dappPerBlock) public onlyOwner {
         dappPerBlock = _dappPerBlock;
+    }
+
+    function claimBnt(uint pid) public {
+        UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
+        liquidityProtection.claimBalance(0,2);
+        bntToken.transfer(msg.sender, userInfo.claimableBnt);
+        userInfo.claimableBnt = 0;
     }
 
 }
