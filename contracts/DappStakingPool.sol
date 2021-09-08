@@ -297,11 +297,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
 
         uint prevLpAmount = getLpAmount(userInfo.positionId);
         uint preDappBal = dappToken.balanceOf(address(this));
-        console.log('locked balance');
-        console.log(liquidityProtectionStore.lockedBalanceCount(address(this)));
         (,, uint networkAmount) = liquidityProtection.removeLiquidityReturn(userInfo.positionId, 1000000, block.timestamp);
-        console.log('networkAmount');
-        console.log(networkAmount);
         liquidityProtection.removeLiquidity(userInfo.positionId, 1000000);
         uint postDappBal = dappToken.balanceOf(address(this));
         // uint receivedDapp = postDappBal.sub(preDappBal);
@@ -320,19 +316,13 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         if(postDappBal.sub(preDappBal) < userInfo.dappStaked) {
             uint diff = userInfo.dappStaked.sub(postDappBal.sub(preDappBal));
             if (dappILSupply >= diff) {
-                // console.log("if (dappILSupply >= diff) {");
-                // console.log(dappILSupply/1e18);
-                // console.log(diff/1e18);
-                // console.log((dappILSupply.sub(diff))/1e18);
                 // cover difference from IL, burn BNT
                 dappILSupply = dappILSupply.sub(diff);
-                // console.log(dappILSupply/1e18);
                 dappToken.transfer(msg.sender, postDappBal.sub(preDappBal).add(diff));
                 
                 // log pending rewards to burn
                 pendingBntIlBurn = pendingBntIlBurn.add(networkAmount);
             } else {
-                console.log("else");
                 // if networkAmount > 0 for BNT, add to pending
                 // if no BNT received, empty remaining IL
                 uint dappTokenAmt = postDappBal.sub(preDappBal);
@@ -347,7 +337,6 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
                 dappToken.transfer(msg.sender, dappTokenAmt);
             }
         } else {
-            console.log("big else");
             dappToken.transfer(msg.sender, postDappBal.sub(preDappBal));
         }
 
