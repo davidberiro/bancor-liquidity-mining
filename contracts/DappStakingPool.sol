@@ -299,7 +299,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         uint preDappBal = dappToken.balanceOf(address(this));
         console.log('locked balance');
         console.log(liquidityProtectionStore.lockedBalanceCount(address(this)));
-        (uint targetAmount, uint baseAmount, uint networkAmount) = liquidityProtection.removeLiquidityReturn(userInfo.positionId, 1000000, block.timestamp);
+        (,, uint networkAmount) = liquidityProtection.removeLiquidityReturn(userInfo.positionId, 1000000, block.timestamp);
         console.log('networkAmount');
         console.log(networkAmount);
         liquidityProtection.removeLiquidity(userInfo.positionId, 1000000);
