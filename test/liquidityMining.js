@@ -33,7 +33,7 @@ describe("Liquidity mining", function() {
   const web3 = new Web3();
   let dappTokenContract;
   let bntTokenContract;
-  let dappBntTokenContract;
+  let dappBntTokenContract, bntToken;
   let dappStakingPoolContract;
   let dappBntAnchor;
   let liquidityProtectionContract;
@@ -42,7 +42,7 @@ describe("Liquidity mining", function() {
     lp1,lp2,lp3,lp4,lp5,lp6, bancorNetworkContract;
 
   before(async function() {
-    [owner, addr1, addr2, addr3, addr4, addr5, ...addrs] = await ethers.getSigners();
+    [owner, addr1, addr2, addr3, addr4, addr5, addr6, addr7, addr8, bancorNetworkContract, ...addrs] = await ethers.getSigners();
 
     // impersonate account w/ permissions to approve converters
     await network.provider.request({
@@ -50,7 +50,7 @@ describe("Liquidity mining", function() {
       params: [liquidityProtectionSettingsAdminAddress]
     });
     const liquidityProtectionSettingsAdminSigner = await ethers.provider.getSigner(liquidityProtectionSettingsAdminAddress);
-    const liquidityProtectionSettingsContract = new ethers.Contract(
+    liquidityProtectionSettingsContract = new ethers.Contract(
       liquidityProtectionSettingsContractAddress,
       liquidityProtectionSettingsAbi,
       liquidityProtectionSettingsAdminSigner
@@ -112,7 +112,6 @@ describe("Liquidity mining", function() {
       bntOwnerAddress,
       "0x10000000000000",
     ]);
-
     await dappTokenContract.mint(addr1.address, ethers.utils.parseEther("100000000000"));
     await dappTokenContract.mint(addr2.address, ethers.utils.parseEther("100000000000"));
     await dappTokenContract.mint(addr3.address, ethers.utils.parseEther("100000000000"));
@@ -131,15 +130,21 @@ describe("Liquidity mining", function() {
 
     await dappTokenContract.mint(addr4.address, ethers.utils.parseEther("100000000000"));
     await dappTokenContract.mint(addr5.address, ethers.utils.parseEther("100000000000"));
+    await dappTokenContract.mint(addr6.address, ethers.utils.parseEther("100000000000"));
+    await dappTokenContract.mint(addr7.address, ethers.utils.parseEther("100000000000"));
+    await dappTokenContract.mint(addr8.address, ethers.utils.parseEther("100000000000"));
+
+    // test IL
+    await bntTokenContract.issue(addr1.address, ethers.utils.parseEther("100000000000"));
+
     const dappConverterContract = new ethers.Contract(
       converterDappBntAddress,
       converterAbi,
       addr1
     );
     [ dappBntAnchor ] = await converterRegistryDataContract.getConvertibleTokenSmartTokens(dappTokenContract.address);
-    await liquidityProtectionSettingsContract.addPoolToWhitelist(dappBntAnchor);
     dappBntTokenContract = await dappTokenFactory.attach(dappBntAnchor);
-    const bntToken = await dappTokenFactory.attach(bntAddress);
+    bntToken = await dappTokenFactory.attach(bntAddress);
     await bancorNetworkContract.convertByPath(
       [bancorEthAddress, ethBntAddress, bntAddress],
       ethers.utils.parseEther("1000"),
