@@ -300,8 +300,6 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         (,, uint networkAmount) = liquidityProtection.removeLiquidityReturn(userInfo.positionId, 1000000, block.timestamp);
         liquidityProtection.removeLiquidity(userInfo.positionId, 1000000);
         uint postDappBal = dappToken.balanceOf(address(this));
-        // uint receivedDapp = postDappBal.sub(preDappBal);
-        // uint receivedBnt = postBntBal.sub(preBntBal);
         uint newLpAmount = getLpAmount(userInfo.positionId);
 
         pool.totalLpStaked = pool.totalLpStaked.sub(prevLpAmount.sub(newLpAmount));
@@ -402,19 +400,22 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
     function claimBnt(uint pid) public {
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         liquidityProtection.claimBalance(0,2);
-        bntToken.transfer(msg.sender, userInfo.claimableBnt);
-        userInfo.claimableBnt = 0;
+        uint postBntBal = bntToken.balanceOf(address(this));
+        if(postBntBal >= userInfo.claimableBnt) {
+            bntToken.transfer(msg.sender, userInfo.claimableBnt);
+            userInfo.claimableBnt = 0;
+        }
     }
 
     // if pending bnt to burn, call claim, burn total balance sent
     function burnBnt() public {
         if(pendingBntIlBurn > 0) {
-            uint preBntBal = bntToken.balanceOf(address(this));
             liquidityProtection.claimBalance(0,2);
             uint postBntBal = bntToken.balanceOf(address(this));
-            bntToken.transfer(address(0x000000000000000000000000000000000000dEaD), postBntBal.sub(preBntBal));
-            pendingBntIlBurn = pendingBntIlBurn.sub(postBntBal.sub(preBntBal));
+            if(postBntBal >= pendingBntIlBurn) {
+                bntToken.transfer(address(0x000000000000000000000000000000000000dEaD), pendingBntIlBurn);
+                pendingBntIlBurn = 0;
+            }
         }
     }
-
 }

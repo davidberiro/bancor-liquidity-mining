@@ -447,7 +447,6 @@ describe("Liquidity mining", function() {
 
   it("Should burn pending BNT IL", async function() {
     let user = addr1;
-    const preBal = await dappStakingPoolContract.pendingBntIlBurn();
 
     // // add additional DAPP IL
     // await dappTokenContract.mint(funderContract.address, ethers.utils.parseEther("1000000"));
@@ -481,6 +480,7 @@ describe("Liquidity mining", function() {
 
     // unstake compare initial and post balance
     await dappStakingPoolContract.connect(user).unstakeDapp(6);
+    const preBal = await dappStakingPoolContract.pendingBntIlBurn();
 
     // advance time
     await ethers.provider.send("evm_increaseTime", [86400]); // 1 days in seconds
@@ -489,9 +489,6 @@ describe("Liquidity mining", function() {
     await dappStakingPoolContract.connect(user).burnBnt();
     
     const postBal = await dappStakingPoolContract.pendingBntIlBurn();
-
-    console.log(preBal.toString()/1e18);
-    console.log(postBal.toString()/1e18);
     expect(preBal).to.be.above(postBal);
   });
 });
