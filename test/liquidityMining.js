@@ -218,6 +218,8 @@ describe("Liquidity mining", function() {
       [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
       '1'
     );
+    
+    await liquidityProtectionSettingsContract.addPoolToWhitelist(dappBntAnchor);
 
     await network.provider.request({
       method: "hardhat_impersonateAccount",
