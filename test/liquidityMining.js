@@ -144,6 +144,7 @@ describe("Liquidity mining", function() {
       [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
       '1'
     );
+    // console.log(`added liquidity BNT: ${ethers.utils.parseEther("650000")/1e18} DAPP: ${ethers.utils.parseEther("1000000000")/1e18}`);
 
     const blockNumber = await ethers.provider.getBlockNumber();
     dappStakingPoolContract = await dappStakingPoolFactory.deploy();
@@ -193,24 +194,28 @@ describe("Liquidity mining", function() {
     // advance time
     await ethers.provider.send("evm_increaseTime", [8640000]); // 100 days in seconds
 
-    // simulate IL
-    await bntTokenContract.connect(addr1).approve(bancorNetworkContract.address, '65400008911974684310');
+    // simulate IL converting 25% of BNT LP depth to DAPP
+    // 1684 BNT 0.259% causes ERR_INVALID_RATE, solution wait 10m
+    await bntTokenContract.connect(addr1).approve(bancorNetworkContract.address, ethers.utils.parseEther("162500"));
     conversionPath = await bancorNetworkContract.conversionPath(
       bntAddress,
       dappTokenContract.address
     );
     rateByPath = await bancorNetworkContract.rateByPath(
       conversionPath,
-      '65400008911974684310'
+      ethers.utils.parseEther("162500")
     );
     await bancorNetworkContract.convertByPath(
       conversionPath,
-      '65400008911974684310',
+      ethers.utils.parseEther("162500"),
       rateByPath,
       addr1.address,
       zeroAddress,
       '0'
     );
+
+    // advance time to allow unstake during "volatile" times
+    await ethers.provider.send("evm_increaseTime", [600]); // 10m 
 
     // unstake compare intial and post balance
     await dappStakingPoolContract.connect(user).unstakeDapp(6);
@@ -282,8 +287,7 @@ describe("Liquidity mining", function() {
       encodedPid
     )).to.emit(dappStakingPoolContract, 'PositionTransferred');
     userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
-
-    expect((userInfo.amount.sub(ethers.utils.parseEther("0.005000487496167134"))).abs().lt(ethers.utils.parseEther("0.0000001"))).to.be.true;
+    expect((userInfo.amount.sub(ethers.utils.parseEther("0.006210728081"))).abs().lt(ethers.utils.parseEther("0.0000001"))).to.be.true;
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
 
     // advance time
@@ -306,7 +310,7 @@ describe("Liquidity mining", function() {
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
     await dappStakingPoolContract.connect(user).stakeDapp(ethers.utils.parseEther("1"), 0);
     userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
-    expect(userInfo.amount).to.equal(ethers.utils.parseEther("0.005000487496167134"));
+    expect(userInfo.amount).to.equal(ethers.utils.parseEther("0.006210728080582889"));
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
   });
 
@@ -314,11 +318,11 @@ describe("Liquidity mining", function() {
     let user = addr2;
     let userInfo;
     userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
-    expect(userInfo.amount).to.equal(ethers.utils.parseEther("0.005000487496167134"));
+    expect(userInfo.amount).to.equal(ethers.utils.parseEther("0.006210728080582889"));
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
     await dappStakingPoolContract.connect(user).stakeDapp(ethers.utils.parseEther("1"), 0);
     userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
-    expect((userInfo.amount.sub(ethers.utils.parseEther("0.010000974992334277"))).abs().lt(ethers.utils.parseEther("0.0000001"))).to.be.true;
+    expect((userInfo.amount.sub(ethers.utils.parseEther("0.012421456161165784"))).abs().lt(ethers.utils.parseEther("0.0000001"))).to.be.true;
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
   });
 
@@ -352,7 +356,7 @@ describe("Liquidity mining", function() {
     )).to.emit(dappStakingPoolContract, 'PositionTransferred');
     userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
 
-    expect((userInfo.amount.sub(ethers.utils.parseEther("0.005000487496167134"))).abs().lt(ethers.utils.parseEther("0.0000001"))).to.be.true;
+    expect((userInfo.amount.sub(ethers.utils.parseEther("0.006210728080582889"))).abs().lt(ethers.utils.parseEther("0.0000001"))).to.be.true;
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
     
     // unstake
@@ -389,7 +393,7 @@ describe("Liquidity mining", function() {
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
     await dappStakingPoolContract.connect(user).stakeDapp(ethers.utils.parseEther("1"), 6);
     userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
-    expect((userInfo.amount.sub(ethers.utils.parseEther("0.005000487496167134"))).abs().lt(ethers.utils.parseEther("0.0000001"))).to.be.true;
+    expect((userInfo.amount.sub(ethers.utils.parseEther("0.006210728080582889"))).abs().lt(ethers.utils.parseEther("0.0000001"))).to.be.true;
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
   });
 
@@ -448,13 +452,9 @@ describe("Liquidity mining", function() {
   it("Should burn pending BNT IL", async function() {
     let user = addr1;
 
-    // // add additional DAPP IL
-    // await dappTokenContract.mint(funderContract.address, ethers.utils.parseEther("1000000"));
-    // await funderContract.fund();
-
     // approve and stake
-    await dappTokenContract.connect(user).approve(dappStakingPoolContract.address, '30000000000000000000000000');
-    await dappStakingPoolContract.connect(user).stakeDapp('30000000000000000000000000', 6);
+    await dappTokenContract.connect(user).approve(dappStakingPoolContract.address, '18000000000000000000000000');
+    await dappStakingPoolContract.connect(user).stakeDapp('18000000000000000000000000', 6);
 
     // simulate IL
     await bntTokenContract.connect(addr1).approve(bancorNetworkContract.address, '65400008911974684310');
