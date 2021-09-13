@@ -166,6 +166,7 @@ describe("Liquidity mining", function() {
       [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
       '1'
     );
+    // console.log(`added liquidity BNT: ${ethers.utils.parseEther("650000")/1e18} DAPP: ${ethers.utils.parseEther("1000000000")/1e18}`);
 
     await network.provider.request({
       method: "hardhat_impersonateAccount",
@@ -349,31 +350,31 @@ describe("Liquidity mining", function() {
   //   );
   // })
 
-  it("test IL upside", async function() {
-    console.log('simulate IL - conversionPath')
-    // simulate IL upside
-    const conversionPath = await bancorNetworkContract.conversionPath(
-      bntAddress,
-      dappTokenContract.address
-    );
-    console.log('simulate IL - rateByPath')
-    const rateByPath = await bancorNetworkContract.rateByPath(
-      conversionPath,
-      '8911974684313573287562'
-    );
-    // console.log(`${addr1.address}\nDAPP: ${(await dappTokenContract.balanceOf(addr1.address)).toString()}\nBNT: ${(await bntTokenContract.balanceOf(addr1.address)).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf(addr1.address)).toString()}\n`)
-    // console.log((await liquidityProtectionStatsContract.totalPoolAmount(dappBntTokenContract.address)).toString());
-    // console.log((await liquidityProtectionStatsContract.totalReserveAmount(dappBntTokenContract.address, bntToken.address)).toString());
-    console.log('simulate IL - convertByPath')
-    await bancorNetworkContract.convertByPath(
-      conversionPath,
-      '8911974684313573287562',
-      rateByPath,
-      addr1.address,
-      zeroAddress,
-      '0'
-    );
-  })
+  // it("test IL upside", async function() {
+  //   console.log('simulate IL - conversionPath')
+  //   // simulate IL upside
+  //   const conversionPath = await bancorNetworkContract.conversionPath(
+  //     bntAddress,
+  //     dappTokenContract.address
+  //   );
+  //   console.log('simulate IL - rateByPath')
+  //   const rateByPath = await bancorNetworkContract.rateByPath(
+  //     conversionPath,
+  //     '8911974684313573287562'
+  //   );
+  //   // console.log(`${addr1.address}\nDAPP: ${(await dappTokenContract.balanceOf(addr1.address)).toString()}\nBNT: ${(await bntTokenContract.balanceOf(addr1.address)).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf(addr1.address)).toString()}\n`)
+  //   // console.log((await liquidityProtectionStatsContract.totalPoolAmount(dappBntTokenContract.address)).toString());
+  //   // console.log((await liquidityProtectionStatsContract.totalReserveAmount(dappBntTokenContract.address, bntToken.address)).toString());
+  //   console.log('simulate IL - convertByPath')
+  //   await bancorNetworkContract.convertByPath(
+  //     conversionPath,
+  //     '8911974684313573287562',
+  //     rateByPath,
+  //     addr1.address,
+  //     zeroAddress,
+  //     '0'
+  //   );
+  // })
 
   it("Should allow deploy", async function() {
   })
