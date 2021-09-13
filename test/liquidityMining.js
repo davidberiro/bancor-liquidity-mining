@@ -258,7 +258,9 @@ describe("Liquidity mining", function() {
       dappTokenContract.address,
       bntAddress,
       blockNumber,
-      ethers.utils.parseEther("1")
+      // DAPPs per block in production will have 4 decimal places
+      // 100k DAPPs per day / 6500 avg blocks per day ~15 DAPPs per block
+      ethers.utils.parseEther("15")
     );
 
 
