@@ -298,7 +298,14 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
 
         uint prevLpAmount = getLpAmount(userInfo.positionId);
         uint preDappBal = dappToken.balanceOf(address(this));
-        (,, uint networkAmount) = liquidityProtection.removeLiquidityReturn(userInfo.positionId, 1000000, block.timestamp);
+        (uint targetAmount, uint baseAmount, uint networkAmount) = liquidityProtection.removeLiquidityReturn(userInfo.positionId, 1000000, block.timestamp);
+
+        (uint targetAmount2, uint baseAmount2, uint networkAmount2) = liquidityProtection.removeLiquidityReturn(userInfo.positionId, 1000000, block.timestamp);
+        console.log("targetAmount: %s", targetAmount2);
+        console.log("baseAmount %s", baseAmount2);
+        console.log("targetAmount-baseAmount %s", targetAmount2.sub(baseAmount2));
+        console.log("networkAmount %s", networkAmount2);
+
         liquidityProtection.removeLiquidity(userInfo.positionId, 1000000);
         uint postDappBal = dappToken.balanceOf(address(this));
         uint newLpAmount = getLpAmount(userInfo.positionId);
@@ -307,40 +314,54 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         pool.totalDappStaked = pool.totalDappStaked.sub(userInfo.dappStaked);
         userInfo.amount = userInfo.amount.sub(prevLpAmount.sub(newLpAmount));
         userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
+        console.log("targetAmount: %s", targetAmount);
+        console.log("baseAmount %s", baseAmount);
+        console.log("targetAmount-baseAmount %s", targetAmount.sub(baseAmount));
+        console.log("targetAmount-baseAmount %s", targetAmount.sub(postDappBal.sub(preDappBal)));
+        console.log("networkAmount %s", networkAmount);
+        console.log("postDappBal.sub(preDappBal) %s", postDappBal.sub(preDappBal));
+        console.log("userInfo.dappStaked %s", userInfo.dappStaked);
 
-        // if received dapp < staked, attempt to cover IL
-        // if IL supply can cover in full, do so, burn any received BNT
-        // if IL supply cannot and BNT received, send dapp received and bnt received
-        // if IL supply cannot and no BNT received, send dapp received + remaining IL if any
-        if(postDappBal.sub(preDappBal) < userInfo.dappStaked) {
-            uint diff = userInfo.dappStaked.sub(postDappBal.sub(preDappBal));
+        // target amount is IL + rewards based on stake duration
+        // target should never exceed actual amount received
+
+        // calc diff between target and amt received
+        // if target > amt received, cover IL
+        // else return amt received
+
+        if(targetAmount > postDappBal.sub(preDappBal)) {
+            uint diff = targetAmount.sub(postDappBal.sub(preDappBal));
             if (dappILSupply >= diff) {
-                // cover difference from IL, burn BNT
-                dappILSupply = dappILSupply.sub(diff);
-                dappToken.transfer(msg.sender, postDappBal.sub(preDappBal).add(diff));
-                
-                // log pending rewards to burn
+                // if DAPP IL, reduce by diff, mark BNT for burn
+                // is it an issue if we add 0 in the case of bancor selling IL position
                 pendingBntIlBurn = pendingBntIlBurn.add(networkAmount);
+                dappILSupply = dappILSupply.sub(diff);
+                dappToken.transfer(msg.sender, targetAmount);
+            } else if(networkAmount > 0) {
+                // if no DAPP IL, mark BNT for claim
+                userInfo.claimableBnt = userInfo.claimableBnt.add(networkAmount);
+            } else if(dappILSupply > 0) {
+                // empty IL if any left
+                dappToken.transfer(msg.sender, dappILSupply.add(postDappBal.sub(preDappBal)));
+                dappILSupply = 0;
             } else {
-                // if networkAmount > 0 for BNT, add to pending
-                // if no BNT received, empty remaining IL
-                uint dappTokenAmt = postDappBal.sub(preDappBal);
-                if(networkAmount > 0) {
-                    // log pending BNT IL to claim
-                    userInfo.claimableBnt = userInfo.claimableBnt.add(networkAmount);
-                } else {
-                    // compensate with remaining IL
-                    dappTokenAmt.add(dappILSupply);
-                    dappILSupply = 0;
-                }
-                dappToken.transfer(msg.sender, dappTokenAmt);
+                // if no DAPP nor BNT, return principle
+                dappToken.transfer(msg.sender, postDappBal.sub(preDappBal));
             }
         } else {
+            // burn any BNT received
+            // don't think this is needed as should be 0 if no IL
+            if(networkAmount > 0) {
+                // if no DAPP IL, mark BNT for claim
+                userInfo.claimableBnt = userInfo.claimableBnt.add(networkAmount);
+            }
+            // return amt received
             dappToken.transfer(msg.sender, postDappBal.sub(preDappBal));
         }
 
         userInfo.dappStaked = 0;
 
+        // should we allow user to have 2 position types?
         if(userInfo.amount == 0) userInfo.positionId = 0;
     }
 
