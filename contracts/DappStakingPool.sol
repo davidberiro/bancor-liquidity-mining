@@ -298,13 +298,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
 
         uint prevLpAmount = getLpAmount(userInfo.positionId);
         uint preDappBal = dappToken.balanceOf(address(this));
-        (uint targetAmount, uint baseAmount, uint networkAmount) = liquidityProtection.removeLiquidityReturn(userInfo.positionId, 1000000, block.timestamp);
-
-        (uint targetAmount2, uint baseAmount2, uint networkAmount2) = liquidityProtection.removeLiquidityReturn(userInfo.positionId, 1000000, block.timestamp);
-        console.log("targetAmount: %s", targetAmount2);
-        console.log("baseAmount %s", baseAmount2);
-        console.log("targetAmount-baseAmount %s", targetAmount2.sub(baseAmount2));
-        console.log("networkAmount %s", networkAmount2);
+        (uint targetAmount,, uint networkAmount) = liquidityProtection.removeLiquidityReturn(userInfo.positionId, 1000000, block.timestamp);
 
         liquidityProtection.removeLiquidity(userInfo.positionId, 1000000);
         uint postDappBal = dappToken.balanceOf(address(this));
@@ -314,20 +308,6 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         pool.totalDappStaked = pool.totalDappStaked.sub(userInfo.dappStaked);
         userInfo.amount = userInfo.amount.sub(prevLpAmount.sub(newLpAmount));
         userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
-        console.log("targetAmount: %s", targetAmount);
-        console.log("baseAmount %s", baseAmount);
-        console.log("targetAmount-baseAmount %s", targetAmount.sub(baseAmount));
-        console.log("targetAmount-baseAmount %s", targetAmount.sub(postDappBal.sub(preDappBal)));
-        console.log("networkAmount %s", networkAmount);
-        console.log("postDappBal.sub(preDappBal) %s", postDappBal.sub(preDappBal));
-        console.log("userInfo.dappStaked %s", userInfo.dappStaked);
-
-        // target amount is IL + rewards based on stake duration
-        // target should never exceed actual amount received
-
-        // calc diff between target and amt received
-        // if target > amt received, cover IL
-        // else return amt received
 
         if(targetAmount > postDappBal.sub(preDappBal)) {
             uint diff = targetAmount.sub(postDappBal.sub(preDappBal));
@@ -340,6 +320,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             } else if(networkAmount > 0) {
                 // if no DAPP IL, mark BNT for claim
                 userInfo.claimableBnt = userInfo.claimableBnt.add(networkAmount);
+                dappToken.transfer(msg.sender, postDappBal.sub(preDappBal));
             } else if(dappILSupply > 0) {
                 // empty IL if any left
                 dappToken.transfer(msg.sender, dappILSupply.add(postDappBal.sub(preDappBal)));
