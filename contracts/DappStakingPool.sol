@@ -196,7 +196,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
 
     // if there is no more bnt for single sided staking, users can still
     // stake dapp-bnt tokens
-    function stakeDappBnt(uint amount, uint pid) public {
+    function stakeDappBnt(uint amount, uint pid) external {
         updateRewards(pid);
         IERC20(dappBntPoolAnchor).transferFrom(msg.sender, address(this), amount);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
@@ -214,7 +214,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         userInfo.depositTime = now;
     }
 
-    function unstakeDappBnt(uint amount, uint pid) public {
+    function unstakeDappBnt(uint amount, uint pid) external {
         harvest(pid);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
@@ -229,8 +229,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         IERC20(dappBntPoolAnchor).transfer(msg.sender, amount);
     }
 
-
-    function stakeDapp(uint amount, uint pid) public {
+    function stakeDapp(uint amount, uint pid) external {
         updateRewards(pid);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
