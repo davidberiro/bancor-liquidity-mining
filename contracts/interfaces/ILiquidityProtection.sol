@@ -22,4 +22,6 @@ interface ILiquidityProtection {
 
     function removeLiquidityReturn(uint256 id, uint32 portion, uint timestamp) external returns (uint, uint, uint);
 
+    function claimBalance(uint256 startIndex, uint256 endIndex) external;
+
 }

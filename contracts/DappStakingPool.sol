@@ -15,11 +15,13 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
 
     struct UserPoolInfo {
         uint amount;
+        uint dappStaked;
         uint lpAmount;
         uint pending;
         uint rewardDebt;
         uint positionId;
         uint depositTime;
+        uint claimableBnt;
     }
 
     struct PoolInfo {
@@ -46,6 +48,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
 
     uint public dappILSupply; // amount of DAPP held by contract to cover IL
     uint public dappRewardsSupply; // amount of DAPP held by contract to cover rewards
+    uint public pendingBntIlBurn; // BNT to be burned after 24hr lockup
 
     PoolInfo[] public poolInfo;
     mapping (uint => mapping (address => UserPoolInfo)) public userPoolInfo;
@@ -185,6 +188,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         pool.totalLpStaked = pool.totalLpStaked.add(lpAmount);
         userInfo.positionId = newId;
         userInfo.amount = userInfo.amount.add(lpAmount);
+        userInfo.dappStaked = userInfo.dappStaked.add(dappAmount);
         userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
         userInfo.depositTime = now;
         emit PositionTransferred(newId, provider);
@@ -192,7 +196,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
 
     // if there is no more bnt for single sided staking, users can still
     // stake dapp-bnt tokens
-    function stakeDappBnt(uint amount, uint pid) public {
+    function stakeDappBnt(uint amount, uint pid) external {
         updateRewards(pid);
         IERC20(dappBntPoolAnchor).transferFrom(msg.sender, address(this), amount);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
@@ -210,7 +214,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         userInfo.depositTime = now;
     }
 
-    function unstakeDappBnt(uint amount, uint pid) public {
+    function unstakeDappBnt(uint amount, uint pid) external {
         harvest(pid);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
@@ -225,94 +229,86 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         IERC20(dappBntPoolAnchor).transfer(msg.sender, amount);
     }
 
-    function stakeDapp(uint amount, uint pid) public {
+    function stakeDapp(uint amount, uint pid) external {
         updateRewards(pid);
-        dappToken.transferFrom(msg.sender, address(this), amount);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
 
-        // scoping for stack too deep error
-        {
-            if (userInfo.amount > 0) {
-                uint pending = userInfo.amount.mul(pool.accDappPerShare).div(1e12).sub(userInfo.rewardDebt);
-                userInfo.pending = userInfo.pending.add(pending);
-            } else {
-                uint positionId = liquidityProtection.addLiquidity(dappBntPoolAnchor, address(dappToken), amount);
-                uint lpAmount = getLpAmount(positionId);
-                pool.totalLpStaked = pool.totalLpStaked.add(lpAmount);
-                pool.totalDappStaked = pool.totalDappStaked.add(amount);
-                userInfo.positionId = positionId;
-                userInfo.amount = lpAmount;
-                userInfo.rewardDebt = lpAmount.mul(pool.accDappPerShare).div(1e12);
-                userInfo.depositTime = now;
-                return;
-            }
-        }
-            uint prevLpAmount = getLpAmount(userInfo.positionId);
-        {
-            (uint targetAmount, uint baseAmount, uint networkAmount) = liquidityProtection.removeLiquidityReturn(userInfo.positionId, 1000000, block.timestamp);
-            // to make sure the contract only manages one position per user, we withdraw
-            // all then redeposit with added amount
-            liquidityProtection.removeLiquidity(userInfo.positionId, 1000000);
-            uint diff = targetAmount.sub(baseAmount);
-            if (diff > 0) {
-                if (dappILSupply >= diff) {
-                    // cover difference from IL, burn BNT
-                    dappILSupply = dappILSupply.sub(diff);
-                    amount = amount.add(targetAmount);
-                    bntToken.transfer(address(0x000000000000000000000000000000000000dEaD), networkAmount);
-                } else {
-                    // if can't afford, only add base amount, compensate with bnt
-                    amount = amount.add(baseAmount);
-                    bntToken.transfer(msg.sender, networkAmount);
-                }
-            } else {
-                amount = amount.add(targetAmount);
-            }
-        }
-        {
+        // If user is staked, we unstake then restake
+        if (userInfo.amount > 0) {
+            uint pending = userInfo.amount.mul(pool.accDappPerShare).div(1e12).sub(userInfo.rewardDebt);
+            userInfo.pending = userInfo.pending.add(pending);
+            uint prevDappBal = dappToken.balanceOf(msg.sender);
+            unstakeDapp(pid);
+            uint postDappBal = dappToken.balanceOf(msg.sender);
+            uint finalAmount = amount.add(postDappBal).sub(prevDappBal);
+            dappToken.transferFrom(msg.sender, address(this), finalAmount);
+
+            uint positionId = liquidityProtection.addLiquidity(dappBntPoolAnchor, address(dappToken), finalAmount);
+            uint lpAmount = getLpAmount(positionId);
+            pool.totalLpStaked = pool.totalLpStaked.add(lpAmount);
+            pool.totalDappStaked = pool.totalDappStaked.add(finalAmount);
+            userInfo.positionId = positionId;
+            userInfo.amount = lpAmount;
+            userInfo.dappStaked = finalAmount;
+            userInfo.rewardDebt = lpAmount.mul(pool.accDappPerShare).div(1e12);
+            userInfo.depositTime = now;
+        } else {
+            dappToken.transferFrom(msg.sender, address(this), amount);
             uint positionId = liquidityProtection.addLiquidity(dappBntPoolAnchor, address(dappToken), amount);
-            uint postLpAmount = getLpAmount(positionId);
-            uint newLpStaked = postLpAmount.sub(prevLpAmount);
-            pool.totalLpStaked = pool.totalLpStaked.add(newLpStaked);
+            uint lpAmount = getLpAmount(positionId);
+            pool.totalLpStaked = pool.totalLpStaked.add(lpAmount);
             pool.totalDappStaked = pool.totalDappStaked.add(amount);
             userInfo.positionId = positionId;
-            userInfo.amount = userInfo.amount.add(newLpStaked);
-            userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
+            userInfo.amount = lpAmount;
+            userInfo.dappStaked = amount;
+            userInfo.rewardDebt = lpAmount.mul(pool.accDappPerShare).div(1e12);
             userInfo.depositTime = now;
         }
     }
 
-    // portion of total staked, PPM
-    function unstakeDapp(uint32 portion, uint pid) public {
+    function unstakeDapp(uint pid) public {
         harvest(pid);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
         require(userInfo.depositTime + pool.timeLocked <= now, "Still locked");
 
         uint prevLpAmount = getLpAmount(userInfo.positionId);
-        (uint targetAmount, uint baseAmount, uint networkAmount) = liquidityProtection.removeLiquidityReturn(userInfo.positionId, portion, block.timestamp);
-        liquidityProtection.removeLiquidity(userInfo.positionId, portion);
-        uint diff = targetAmount.sub(baseAmount);
-        uint newLpAmount = getLpAmount(userInfo.positionId);
+        uint preDappBal = dappToken.balanceOf(address(this));
 
-        pool.totalLpStaked = pool.totalLpStaked.sub(prevLpAmount.sub(newLpAmount));
-        pool.totalDappStaked = pool.totalDappStaked.sub(targetAmount);
-        userInfo.amount = userInfo.amount.sub(prevLpAmount.sub(newLpAmount));
+        (uint targetAmount,, uint networkAmount) = liquidityProtection.removeLiquidityReturn(userInfo.positionId, 1000000, block.timestamp);
+        liquidityProtection.removeLiquidity(userInfo.positionId, 1000000);
+
+        uint postDappBal = dappToken.balanceOf(address(this));
+        uint dappReceived = postDappBal.sub(preDappBal);
+
+        pool.totalLpStaked = pool.totalLpStaked.sub(prevLpAmount);
+        pool.totalDappStaked = pool.totalDappStaked.sub(userInfo.dappStaked);
+        userInfo.amount = userInfo.amount.sub(prevLpAmount);
         userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
 
-        if (diff > 0) {
+        uint finalDappAmount = targetAmount < userInfo.dappStaked ? targetAmount : userInfo.dappStaked;
+
+        if(finalDappAmount > dappReceived) {
+            uint diff = finalDappAmount.sub(dappReceived);
             if (dappILSupply >= diff) {
-                // cover difference from IL, burn BNT
+                // if DAPP IL, reduce by diff, mark BNT for burn
+                // is it an issue if we add 0 in the case of bancor selling IL position
+                pendingBntIlBurn = pendingBntIlBurn.add(networkAmount);
                 dappILSupply = dappILSupply.sub(diff);
-                dappToken.transfer(msg.sender, targetAmount);
-                bntToken.transfer(address(0x000000000000000000000000000000000000dEaD), networkAmount);
+                dappToken.transfer(msg.sender, finalDappAmount);
             } else {
-                // if can't afford, only add base amount, compensate with bnt
-                dappToken.transfer(msg.sender, baseAmount);
-                bntToken.transfer(msg.sender, networkAmount);
+                dappToken.transfer(msg.sender, dappReceived.add(dappILSupply));
+                userInfo.claimableBnt = userInfo.claimableBnt.add(networkAmount);
+                dappILSupply = 0;
             }
+        } else {
+            pendingBntIlBurn = pendingBntIlBurn.add(networkAmount);
+            // return amt received
+            dappToken.transfer(msg.sender, dappReceived);
         }
+
+        userInfo.dappStaked = 0;
 
         if(userInfo.amount == 0) userInfo.positionId = 0;
     }
@@ -337,14 +333,14 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         }
     }
 
-    function fund(uint dappRewardsAmount, uint dappILAmount) public {
+    function fund(uint dappRewardsAmount, uint dappILAmount) external {
         dappToken.transferFrom(msg.sender, address(this), dappRewardsAmount);
         dappToken.transferFrom(msg.sender, address(this), dappILAmount);
         dappRewardsSupply = dappRewardsSupply.add(dappRewardsAmount);
         dappILSupply = dappILSupply.add(dappILAmount);
     }
 
-    function add(uint256 _allocPoint, uint256 _timeLocked) public onlyOwner {
+    function add(uint256 _allocPoint, uint256 _timeLocked) external onlyOwner {
         uint256 lastRewardBlock = block.number > startBlock ? block.number : startBlock;
         totalAllocPoint = totalAllocPoint.add(_allocPoint);
         poolInfo.push(PoolInfo({
@@ -358,7 +354,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         }));
     }
 
-    function set(uint256 pid, uint256 _allocPoint) public onlyOwner {
+    function set(uint256 pid, uint256 _allocPoint) external onlyOwner {
         uint256 prevAllocPoint = poolInfo[pid].allocPoint;
         poolInfo[pid].allocPoint = _allocPoint;
         if (prevAllocPoint != _allocPoint) {
@@ -366,8 +362,37 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         }
     }
 
-    function setDappPerBlock(uint _dappPerBlock) public onlyOwner {
+    function setDappPerBlock(uint _dappPerBlock) external onlyOwner {
         dappPerBlock = _dappPerBlock;
     }
 
+    // user must wait 24 hours for BNT to unlock, after can call and receive
+    function claimUserBnt(uint pid) external {
+        UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
+        uint bntBal = bntToken.balanceOf(address(this));
+        uint amount = userInfo.claimableBnt;
+        if(bntBal >= amount) {
+            userInfo.claimableBnt = 0;
+            bntToken.transfer(msg.sender, amount);
+        }
+    }
+
+    // user must wait 24 hours for BNT to unlock, after can call and receive
+    function claimBnt(uint num) external {
+        liquidityProtection.claimBalance(0, num + 1);
+    }
+
+    // if pending bnt to burn, burn
+    function burnBnt() external {
+        if(pendingBntIlBurn > 0) {
+            uint bntBal = bntToken.balanceOf(address(this));
+            if(bntBal >= pendingBntIlBurn) {
+                bntToken.transfer(address(0x000000000000000000000000000000000000dEaD), pendingBntIlBurn);
+                pendingBntIlBurn = 0;
+            } else {
+                bntToken.transfer(address(0x000000000000000000000000000000000000dEaD), bntBal);
+                pendingBntIlBurn = pendingBntIlBurn.sub(bntBal);
+            }
+        }
+    }
 }
