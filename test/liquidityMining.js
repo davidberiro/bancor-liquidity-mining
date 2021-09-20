@@ -226,7 +226,8 @@ describe("Liquidity mining", function() {
     await ethers.provider.send("evm_increaseTime", [86400]); // 1 days in seconds
 
     // claim BNT bal
-    await dappStakingPoolContract.connect(user).claimBnt(6);
+    await dappStakingPoolContract.connect(user).claimBnt(1);
+    await dappStakingPoolContract.connect(user).claimUserBnt(6);
 
     const postBal = await bntTokenContract.balanceOf(user.address);
     expect(postBal).to.be.above(preBal);
