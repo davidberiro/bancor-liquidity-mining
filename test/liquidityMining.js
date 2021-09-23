@@ -520,12 +520,21 @@ describe("Liquidity mining", function() {
     let user = addr6;
     let userInfo;
     await dappStakingPoolContract.connect(user).stakeDappBnt(ethers.utils.parseEther("1"), 6);
+
     // swapping order of stakeDapp and stakeDappBnt gets reverted with reason string 'Still locked'
+    // adding time then gets reverted with reason string 
+    // 'ERR_ACCESS_DENIED' when removing liquidity from bancor
+    let nowBlock = await ethers.provider.getBlockNumber();
+    let timestamp = (await ethers.provider.getBlock(nowBlock)).timestamp;
+    await ethers.provider.send("evm_mine", [ timestamp + 1000 ]);
+    // advance a lot of time
+    // same 'ERR_ACCESS_DENIED' error
+    await ethers.provider.send("evm_increaseTime", [8640000]); // 100 days in seconds
     await dappStakingPoolContract.connect(user).stakeDapp(ethers.utils.parseEther("1"), 6);
 
     // advance time
-    const nowBlock = await ethers.provider.getBlockNumber();
-    const timestamp = (await ethers.provider.getBlock(nowBlock)).timestamp;
+    nowBlock = await ethers.provider.getBlockNumber();
+    timestamp = (await ethers.provider.getBlock(nowBlock)).timestamp;
     await ethers.provider.send("evm_mine", [ timestamp + 1000 ]);
 
     userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
