@@ -279,7 +279,7 @@ describe("Liquidity mining", function() {
     await dappTokenContract.connect(addr1).approve(dappStakingPoolContract.address, ethers.utils.parseEther("100000000"));
 
     // comment out if testing IL downside without DAPP as IL protection
-    // await dappStakingPoolContract.fund(ethers.utils.parseEther("140000"), ethers.utils.parseEther("60000"));
+    await dappStakingPoolContract.fund(ethers.utils.parseEther("140000"), ethers.utils.parseEther("60000"));
 
     // console.log(`0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097\nDAPP: ${(await dappTokenContract.balanceOf("0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097")).toString()}\nBNT: ${(await bntTokenContract.balanceOf("0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097")).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf("0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097")).toString()}\n`)
     // console.log(`0xcd3b766ccdd6ae721141f452c550ca635964ce71\nDAPP: ${(await dappTokenContract.balanceOf("0xcd3b766ccdd6ae721141f452c550ca635964ce71")).toString()}\nBNT: ${(await bntTokenContract.balanceOf("0xcd3b766ccdd6ae721141f452c550ca635964ce71")).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf("0xcd3b766ccdd6ae721141f452c550ca635964ce71")).toString()}\n`)
@@ -295,30 +295,30 @@ describe("Liquidity mining", function() {
     // console.log((await liquidityProtectionStatsContract.totalReserveAmount(dappBntTokenContract.address, bntToken.address)).toString());
   });
 
-  // it("Should allow deploy lp", async function() {
-  //   await dappTokenContract.connect(lp1).approve(dappStakingPoolContract.address, '989998000000000000000000');
-  //   await dappStakingPoolContract.connect(lp1).stakeDapp('989998000000000000000000', 0);
-  // })
+  it("Should allow deploy lp", async function() {
+    await dappTokenContract.connect(lp1).approve(dappStakingPoolContract.address, '989998000000000000000000');
+    await dappStakingPoolContract.connect(lp1).stakeDapp('989998000000000000000000', 0);
+  })
 
-  // it("Should allow deploy lp", async function() {
-  //   await dappTokenContract.connect(lp2).approve(dappStakingPoolContract.address, '989998000000000000000000');
-  //   await dappStakingPoolContract.connect(lp2).stakeDapp('989998000000000000000000', 0);
-  // })
+  it("Should allow deploy lp", async function() {
+    await dappTokenContract.connect(lp2).approve(dappStakingPoolContract.address, '989998000000000000000000');
+    await dappStakingPoolContract.connect(lp2).stakeDapp('989998000000000000000000', 0);
+  })
 
-  // it("Should allow deploy lp", async function() {
-  //   await dappTokenContract.connect(lp3).approve(dappStakingPoolContract.address, '989998000000000000000000');
-  //   await dappStakingPoolContract.connect(lp3).stakeDapp('989998000000000000000000', 0);
-  // })
+  it("Should allow deploy lp", async function() {
+    await dappTokenContract.connect(lp3).approve(dappStakingPoolContract.address, '989998000000000000000000');
+    await dappStakingPoolContract.connect(lp3).stakeDapp('989998000000000000000000', 0);
+  })
 
-  // it("Should allow deploy lp", async function() {
-  //   await dappTokenContract.connect(lp4).approve(dappStakingPoolContract.address, '989998000000000000000000');
-  //   await dappStakingPoolContract.connect(lp4).stakeDapp('989998000000000000000000', 0);
-  // })
+  it("Should allow deploy lp", async function() {
+    await dappTokenContract.connect(lp4).approve(dappStakingPoolContract.address, '989998000000000000000000');
+    await dappStakingPoolContract.connect(lp4).stakeDapp('989998000000000000000000', 0);
+  })
 
-  // it("Should allow deploy lp", async function() {
-  //   await dappTokenContract.connect(lp5).approve(dappStakingPoolContract.address, '989998000000000000000000');
-  //   await dappStakingPoolContract.connect(lp5).stakeDapp('989998000000000000000000', 0);
-  // })
+  it("Should allow deploy lp", async function() {
+    await dappTokenContract.connect(lp5).approve(dappStakingPoolContract.address, '989998000000000000000000');
+    await dappStakingPoolContract.connect(lp5).stakeDapp('989998000000000000000000', 0);
+  })
 
   it("Should allow deploy lp", async function() {
     await dappTokenContract.connect(lp6).approve(dappStakingPoolContract.address, '1000000000000000000000000');
@@ -354,31 +354,31 @@ describe("Liquidity mining", function() {
   //   );
   // })
 
-  it("test IL downside", async function() {
-    console.log('simulate IL - conversionPath')
-    // simulate IL downside
-    const conversionPath = await bancorNetworkContract.conversionPath(
-      bntAddress,
-      dappTokenContract.address
-    );
-    console.log('simulate IL - rateByPath')
-    const rateByPath = await bancorNetworkContract.rateByPath(
-      conversionPath,
-      '8911974684313573287562'
-    );
-    // console.log(`${addr1.address}\nDAPP: ${(await dappTokenContract.balanceOf(addr1.address)).toString()}\nBNT: ${(await bntTokenContract.balanceOf(addr1.address)).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf(addr1.address)).toString()}\n`)
-    // console.log((await liquidityProtectionStatsContract.totalPoolAmount(dappBntTokenContract.address)).toString());
-    // console.log((await liquidityProtectionStatsContract.totalReserveAmount(dappBntTokenContract.address, bntToken.address)).toString());
-    console.log('simulate IL - convertByPath')
-    await bancorNetworkContract.convertByPath(
-      conversionPath,
-      '8911974684313573287562',
-      rateByPath,
-      addr1.address,
-      zeroAddress,
-      '0'
-    );
-  })
+  // it("test IL downside", async function() {
+  //   console.log('simulate IL - conversionPath')
+  //   // simulate IL downside
+  //   const conversionPath = await bancorNetworkContract.conversionPath(
+  //     bntAddress,
+  //     dappTokenContract.address
+  //   );
+  //   console.log('simulate IL - rateByPath')
+  //   const rateByPath = await bancorNetworkContract.rateByPath(
+  //     conversionPath,
+  //     '8911974684313573287562'
+  //   );
+  //   // console.log(`${addr1.address}\nDAPP: ${(await dappTokenContract.balanceOf(addr1.address)).toString()}\nBNT: ${(await bntTokenContract.balanceOf(addr1.address)).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf(addr1.address)).toString()}\n`)
+  //   // console.log((await liquidityProtectionStatsContract.totalPoolAmount(dappBntTokenContract.address)).toString());
+  //   // console.log((await liquidityProtectionStatsContract.totalReserveAmount(dappBntTokenContract.address, bntToken.address)).toString());
+  //   console.log('simulate IL - convertByPath')
+  //   await bancorNetworkContract.convertByPath(
+  //     conversionPath,
+  //     '8911974684313573287562',
+  //     rateByPath,
+  //     addr1.address,
+  //     zeroAddress,
+  //     '0'
+  //   );
+  // })
 
   // it("Should allow burn BNT", async function() {
   //   console.log((await bntTokenContract.balanceOf('0x000000000000000000000000000000000000dEaD')).toString())
@@ -389,18 +389,18 @@ describe("Liquidity mining", function() {
   //   console.log((await bntTokenContract.balanceOf('0x000000000000000000000000000000000000dEaD')).toString())
   // })
 
-  it("Should allow claim BNT", async function() {
-    console.log((await bntTokenContract.balanceOf(lp6.address)).toString())
-    await ethers.provider.send("evm_increaseTime", [600]); // 10m in seconds
-    await dappStakingPoolContract.connect(lp6).unstakeDapp(0);
-    await ethers.provider.send("evm_increaseTime", [86400]); // 1 day in seconds
-    await dappStakingPoolContract.connect(lp6).claimBnt(0);
-    console.log((await bntTokenContract.balanceOf(lp6.address)).toString())
-  })
+  // it("Should allow claim BNT", async function() {
+  //   console.log((await bntTokenContract.balanceOf(lp6.address)).toString())
+  //   await ethers.provider.send("evm_increaseTime", [600]); // 10m in seconds
+  //   await dappStakingPoolContract.connect(lp6).unstakeDapp(0);
+  //   await ethers.provider.send("evm_increaseTime", [86400]); // 1 day in seconds
+  //   await dappStakingPoolContract.connect(lp6).claimBnt(0);
+  //   console.log((await bntTokenContract.balanceOf(lp6.address)).toString())
+  // })
 
-  it("Should allow pass volatility check", async function() {
-    await ethers.provider.send("evm_increaseTime", [600]); // 10m in seconds
-  })
+  // it("Should allow pass volatility check", async function() {
+  //   await ethers.provider.send("evm_increaseTime", [600]); // 10m in seconds
+  // })
 
   it("Should allow deploy", async function() {
   })
