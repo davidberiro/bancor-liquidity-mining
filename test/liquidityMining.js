@@ -268,8 +268,6 @@ describe("Liquidity mining", function() {
     let user = addr5;
     let userInfo;
 
-    const prevPoolEntries = await dappStakingPoolContract.userPoolTotalEntries(0);
-
     // stake and  advance time
     await dappTokenContract.connect(user).approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
     await dappStakingPoolContract.connect(user).stakeDapp(ethers.utils.parseEther("1"), 0);
@@ -277,16 +275,8 @@ describe("Liquidity mining", function() {
     let timestamp = (await ethers.provider.getBlock(nowBlock)).timestamp;
     await ethers.provider.send("evm_mine", [ timestamp + 1000 ]);
 
-    // should increase on stakeDapp if new stake
-    const postPoolEntries = await dappStakingPoolContract.userPoolTotalEntries(0);
-    expect(postPoolEntries.sub(prevPoolEntries)).to.equal(1);
-    
     // fully unstake
     await dappStakingPoolContract.connect(user).unstakeDapp(0);
-
-    // should decrease on unstakeDapp
-    const postUnstakePoolEntries = await dappStakingPoolContract.userPoolTotalEntries(0);
-    expect(postUnstakePoolEntries).to.equal(postPoolEntries.sub(1));
 
     // transfer position and notify
     userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
@@ -305,10 +295,6 @@ describe("Liquidity mining", function() {
     userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
     expect((userInfo.amount.sub(ethers.utils.parseEther("0.006210728081"))).abs().lt(ethers.utils.parseEther("0.0000001"))).to.be.true;
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
-
-    // should increase on transfer
-    const postTransferPoolEntries = await dappStakingPoolContract.userPoolTotalEntries(0);
-    expect(postTransferPoolEntries).to.equal(postUnstakePoolEntries.add(1));
 
     // advance time
     nowBlock = await ethers.provider.getBlockNumber();
@@ -445,11 +431,7 @@ describe("Liquidity mining", function() {
   it("Should allow increase/decrease pool entries double sided stake", async function() {
     let user = addr2;
     let userInfo;
-    const prevDappBntPoolEntries = await dappStakingPoolContract.userPoolTotalEntries(6);
     await dappStakingPoolContract.connect(user).stakeDappBnt(ethers.utils.parseEther("1"), 6);
-    // should increase on stakeDappBnt
-    const postDappBntPoolEntries = await dappStakingPoolContract.userPoolTotalEntries(6);
-    expect(postDappBntPoolEntries.sub(prevDappBntPoolEntries)).to.equal(1);
 
     // advance time
     const nowBlock = await ethers.provider.getBlockNumber();
@@ -458,14 +440,10 @@ describe("Liquidity mining", function() {
 
     userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
 
-    const prevPoolEntries = await dappStakingPoolContract.userPoolTotalEntries(6);
     await dappStakingPoolContract.connect(user).unstakeDappBnt('1000000000000000000', 6);
-    const postPoolEntries = await dappStakingPoolContract.userPoolTotalEntries(6);
     userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
     expect(userInfo.amount).to.equal(ethers.utils.parseEther("0"));
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
-    // should decrease on unstakeDappBnt all
-    expect(prevPoolEntries.sub(postPoolEntries)).to.equal(1);
   });
 
   it("Should allow call getPendingRewards for frontend", async function() {
@@ -531,17 +509,13 @@ describe("Liquidity mining", function() {
     // same 'ERR_ACCESS_DENIED' error
     await ethers.provider.send("evm_increaseTime", [8640000]); // 100 days in seconds
     await dappStakingPoolContract.connect(user).stakeDapp(ethers.utils.parseEther("1"), 6);
-
     // advance time
     nowBlock = await ethers.provider.getBlockNumber();
     timestamp = (await ethers.provider.getBlock(nowBlock)).timestamp;
     await ethers.provider.send("evm_mine", [ timestamp + 1000 ]);
 
-    userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
-
     await dappStakingPoolContract.connect(user).unstakeDapp(6);
     await dappStakingPoolContract.connect(user).unstakeDappBnt('1000000000000000000', 6);
-    userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
     userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
     expect(userInfo.amount).to.equal(ethers.utils.parseEther("0"));
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
