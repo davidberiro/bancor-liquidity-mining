@@ -267,6 +267,7 @@ describe("Liquidity mining", function() {
   it("Should allow transfer position after full unstake", async function() {
     let user = addr5;
     let userInfo;
+    const prevPoolEntries = await dappStakingPoolContract.userPoolTotalEntries(0);
 
     // stake and  advance time
     await dappTokenContract.connect(user).approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
@@ -275,8 +276,16 @@ describe("Liquidity mining", function() {
     let timestamp = (await ethers.provider.getBlock(nowBlock)).timestamp;
     await ethers.provider.send("evm_mine", [ timestamp + 1000 ]);
 
+    // increase total entries stake dapp
+    const postPoolEntries = await dappStakingPoolContract.userPoolTotalEntries(0);
+    expect(postPoolEntries.sub(prevPoolEntries)).to.equal(1);
+
     // fully unstake
     await dappStakingPoolContract.connect(user).unstakeDapp(0);
+
+    // decrease total entries unstake dapp
+    const postUnstakePoolEntries = await dappStakingPoolContract.userPoolTotalEntries(0);
+    expect(postPoolEntries.sub(postUnstakePoolEntries)).to.equal(1);
 
     // transfer position and notify
     userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
@@ -295,6 +304,10 @@ describe("Liquidity mining", function() {
     userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
     expect((userInfo.amount.sub(ethers.utils.parseEther("0.006210728081"))).abs().lt(ethers.utils.parseEther("0.0000001"))).to.be.true;
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
+
+    // increase total entries on transfer
+    const postTransferPoolEntries = await dappStakingPoolContract.userPoolTotalEntries(0);
+    expect(postTransferPoolEntries).to.equal(postUnstakePoolEntries.add(1));
 
     // advance time
     nowBlock = await ethers.provider.getBlockNumber();
@@ -497,18 +510,14 @@ describe("Liquidity mining", function() {
   it("Should allow user to unstake DAPP and DAPP-BNT LP from timelocked pool", async function() {
     let user = addr6;
     let userInfo;
+    const prevPoolEntries = await dappStakingPoolContract.userPoolTotalEntries(6);
     await dappStakingPoolContract.connect(user).stakeDappBnt(ethers.utils.parseEther("1"), 6);
 
-    // swapping order of stakeDapp and stakeDappBnt gets reverted with reason string 'Still locked'
-    // adding time then gets reverted with reason string 
-    // 'ERR_ACCESS_DENIED' when removing liquidity from bancor
-    let nowBlock = await ethers.provider.getBlockNumber();
-    let timestamp = (await ethers.provider.getBlock(nowBlock)).timestamp;
-    await ethers.provider.send("evm_mine", [ timestamp + 1000 ]);
-    // advance a lot of time
-    // same 'ERR_ACCESS_DENIED' error
-    await ethers.provider.send("evm_increaseTime", [8640000]); // 100 days in seconds
+    // increase total entries stake dapp bnt
+    const postPoolEntries = await dappStakingPoolContract.userPoolTotalEntries(6);
+    expect(postPoolEntries.sub(prevPoolEntries)).to.equal(1);
     await dappStakingPoolContract.connect(user).stakeDapp(ethers.utils.parseEther("1"), 6);
+
     // advance time
     nowBlock = await ethers.provider.getBlockNumber();
     timestamp = (await ethers.provider.getBlock(nowBlock)).timestamp;
@@ -519,5 +528,9 @@ describe("Liquidity mining", function() {
     userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
     expect(userInfo.amount).to.equal(ethers.utils.parseEther("0"));
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
+    
+    // decrease total entries unstake dapp bnt
+    const postUnstakePoolEntries = await dappStakingPoolContract.userPoolTotalEntries(6);
+    expect(postPoolEntries.sub(postUnstakePoolEntries)).to.equal(1);
   });
 });

@@ -52,6 +52,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
 
     PoolInfo[] public poolInfo;
     mapping (uint => mapping (address => UserPoolInfo)) public userPoolInfo;
+    mapping (uint => uint) public userPoolTotalEntries;
 
     event DepositDapp(address indexed user, uint indexed pid, uint amount);
     event DepositDappBnt(address indexed user, uint indexed pid, uint amount);
@@ -182,6 +183,8 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         if (userInfo.amount > 0) {
             uint pending = userInfo.amount.mul(pool.accDappPerShare).div(1e12).sub(userInfo.rewardDebt);
             userInfo.pending = userInfo.pending.add(pending);
+        } else {
+            userPoolTotalEntries[pid]++;
         }
 
         pool.totalDappStaked = pool.totalDappStaked.add(dappAmount);
@@ -205,6 +208,8 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         if (userInfo.amount > 0) {
             uint pending = userInfo.amount.mul(pool.accDappPerShare).div(1e12).sub(userInfo.rewardDebt);
             userInfo.pending = userInfo.pending.add(pending);
+        } else {
+            userPoolTotalEntries[pid]++;
         }
 
         pool.totalLpStaked = pool.totalLpStaked.add(amount);
@@ -228,12 +233,20 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         userInfo.lpAmount = userInfo.lpAmount.sub(amount);
         userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
         IERC20(dappBntPoolAnchor).transfer(msg.sender, amount);
+        
+        if(userInfo.amount == 0) {
+            userPoolTotalEntries[pid]--;
+        }
     }
 
     function stakeDapp(uint amount, uint pid) external {
         updateRewards(pid);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
+        
+        if(userInfo.amount == 0) {
+            userPoolTotalEntries[pid]++;
+        }
 
         // If user is staked, we unstake then restake
         if (userInfo.dappStaked > 0) {
@@ -382,8 +395,6 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         if(finalDappAmount > dappReceived) {
             uint diff = finalDappAmount.sub(dappReceived);
             if (dappILSupply >= diff) {
-                // if DAPP IL, reduce by diff, mark BNT for burn
-                // is it an issue if we add 0 in the case of bancor selling IL position
                 pendingBntIlBurn = pendingBntIlBurn.add(networkAmount);
                 dappILSupply = dappILSupply.sub(diff);
                 dappToken.transfer(msg.sender, finalDappAmount);
@@ -394,11 +405,14 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             }
         } else {
             pendingBntIlBurn = pendingBntIlBurn.add(networkAmount);
-            // return amt received
             dappToken.transfer(msg.sender, dappReceived);
         }
 
         userInfo.dappStaked = 0;
         userInfo.positionId = 0;
+        
+        if(userInfo.amount == 0) {
+            userPoolTotalEntries[pid]--;
+        }
     }
 }
