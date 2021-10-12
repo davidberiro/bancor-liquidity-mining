@@ -29,7 +29,7 @@ const ethBntAddress = "0xb1CD6e4153B2a390Cf00A6556b0fC1458C4A5533";
 const zeroAddress = "0x0000000000000000000000000000000000000000";
 
 describe("Liquidity mining", function() {
-  this.timeout(100000);
+  this.timeout(10000000);
   const web3 = new Web3();
   let dappTokenContract;
   let bntTokenContract;
