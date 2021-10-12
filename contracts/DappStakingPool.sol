@@ -22,6 +22,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         uint positionId;
         uint depositTime;
         uint claimableBnt;
+        uint bntLocked;
     }
 
     struct PoolInfo {
@@ -344,10 +345,12 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
     // user must wait 24 hours for BNT to unlock, after can call and receive
     function claimUserBnt(uint pid) external {
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
+        require(userInfo.bntLocked <= now, "BNT still locked");
         uint bntBal = bntToken.balanceOf(address(this));
         uint amount = userInfo.claimableBnt;
         if(bntBal >= amount) {
             userInfo.claimableBnt = 0;
+            userInfo.bntLocked = 0;
             bntToken.transfer(msg.sender, amount);
         }
     }
@@ -401,6 +404,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             } else {
                 dappToken.transfer(msg.sender, dappReceived.add(dappILSupply));
                 userInfo.claimableBnt = userInfo.claimableBnt.add(networkAmount);
+                userInfo.bntLocked = now + 24 hours;
                 dappILSupply = 0;
             }
         } else {
