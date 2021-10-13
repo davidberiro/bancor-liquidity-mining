@@ -173,70 +173,70 @@ describe("Liquidity mining", function() {
     // console.log(`added liquidity BNT: ${ethers.utils.parseEther("650000")/1e18} DAPP: ${ethers.utils.parseEther("1000000000")/1e18}`);
 
     // add lp liquidity
-    // await network.provider.request({
-    //   method: "hardhat_impersonateAccount",
-    //   params: ["0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097"],
-    // });
-    // lp1 = await ethers.getSigner("0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097");
-    // await dappTokenContract.connect(lp1).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
-    // await bntToken.connect(lp1).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
-    // await dappConverterContract.connect(lp1).addLiquidity(
-    //   [dappTokenContract.address, bntAddress],
-    //   [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
-    //   '1'
-    // );
+    await network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: ["0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097"],
+    });
+    lp1 = await ethers.getSigner("0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097");
+    await dappTokenContract.connect(lp1).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
+    await bntToken.connect(lp1).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
+    await dappConverterContract.connect(lp1).addLiquidity(
+      [dappTokenContract.address, bntAddress],
+      [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
+      '1'
+    );
 
-    // await network.provider.request({
-    //   method: "hardhat_impersonateAccount",
-    //   params: ["0xcd3b766ccdd6ae721141f452c550ca635964ce71"],
-    // });
-    // lp2 = await ethers.getSigner("0xcd3b766ccdd6ae721141f452c550ca635964ce71");
-    // await dappTokenContract.connect(lp2).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
-    // await bntToken.connect(lp2).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
-    // await dappConverterContract.connect(lp2).addLiquidity(
-    //   [dappTokenContract.address, bntAddress],
-    //   [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
-    //   '1'
-    // );
+    await network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: ["0xcd3b766ccdd6ae721141f452c550ca635964ce71"],
+    });
+    lp2 = await ethers.getSigner("0xcd3b766ccdd6ae721141f452c550ca635964ce71");
+    await dappTokenContract.connect(lp2).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
+    await bntToken.connect(lp2).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
+    await dappConverterContract.connect(lp2).addLiquidity(
+      [dappTokenContract.address, bntAddress],
+      [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
+      '1'
+    );
 
-    // await network.provider.request({
-    //   method: "hardhat_impersonateAccount",
-    //   params: ["0x2546bcd3c84621e976d8185a91a922ae77ecec30"],
-    // });
-    // lp3 = await ethers.getSigner("0x2546bcd3c84621e976d8185a91a922ae77ecec30");
-    // await dappTokenContract.connect(lp3).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
-    // await bntToken.connect(lp3).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
-    // await dappConverterContract.connect(lp3).addLiquidity(
-    //   [dappTokenContract.address, bntAddress],
-    //   [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
-    //   '1'
-    // );
+    await network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: ["0x2546bcd3c84621e976d8185a91a922ae77ecec30"],
+    });
+    lp3 = await ethers.getSigner("0x2546bcd3c84621e976d8185a91a922ae77ecec30");
+    await dappTokenContract.connect(lp3).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
+    await bntToken.connect(lp3).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
+    await dappConverterContract.connect(lp3).addLiquidity(
+      [dappTokenContract.address, bntAddress],
+      [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
+      '1'
+    );
 
-    // await network.provider.request({
-    //   method: "hardhat_impersonateAccount",
-    //   params: ["0xbda5747bfd65f08deb54cb465eb87d40e51b197e"],
-    // });
-    // lp4 = await ethers.getSigner("0xbda5747bfd65f08deb54cb465eb87d40e51b197e");
-    // await dappTokenContract.connect(lp4).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
-    // await bntToken.connect(lp4).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
-    // await dappConverterContract.connect(lp4).addLiquidity(
-    //   [dappTokenContract.address, bntAddress],
-    //   [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
-    //   '1'
-    // );
+    await network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: ["0xbda5747bfd65f08deb54cb465eb87d40e51b197e"],
+    });
+    lp4 = await ethers.getSigner("0xbda5747bfd65f08deb54cb465eb87d40e51b197e");
+    await dappTokenContract.connect(lp4).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
+    await bntToken.connect(lp4).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
+    await dappConverterContract.connect(lp4).addLiquidity(
+      [dappTokenContract.address, bntAddress],
+      [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
+      '1'
+    );
 
-    // await network.provider.request({
-    //   method: "hardhat_impersonateAccount",
-    //   params: ["0xdd2fd4581271e230360230f9337d5c0430bf44c0"],
-    // });
-    // lp5 = await ethers.getSigner("0xdd2fd4581271e230360230f9337d5c0430bf44c0");
-    // await dappTokenContract.connect(lp5).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
-    // await bntToken.connect(lp5).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
-    // await dappConverterContract.connect(lp5).addLiquidity(
-    //   [dappTokenContract.address, bntAddress],
-    //   [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
-    //   '1'
-    // );
+    await network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: ["0xdd2fd4581271e230360230f9337d5c0430bf44c0"],
+    });
+    lp5 = await ethers.getSigner("0xdd2fd4581271e230360230f9337d5c0430bf44c0");
+    await dappTokenContract.connect(lp5).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
+    await bntToken.connect(lp5).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
+    await dappConverterContract.connect(lp5).addLiquidity(
+      [dappTokenContract.address, bntAddress],
+      [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
+      '1'
+    );
 
     await network.provider.request({
       method: "hardhat_impersonateAccount",
