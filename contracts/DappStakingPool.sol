@@ -294,17 +294,18 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
         uint pendingReward = userInfo.pending.add(userInfo.amount.mul(pool.accDappPerShare).div(1e12).sub(userInfo.rewardDebt));
-        require(pendingReward > 0, "no rewards to claim");
-        if (dappRewardsSupply > pendingReward) {
-            dappToken.transfer(msg.sender, pendingReward);
-            dappRewardsSupply = dappRewardsSupply.sub(pendingReward);
-            userInfo.pending = 0;
-            userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
-        } else {
-            dappToken.transfer(msg.sender, dappRewardsSupply);
-            dappRewardsSupply = 0;
-            userInfo.pending = pendingReward.sub(dappRewardsSupply);
-            userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
+        if(pendingReward > 0) {
+            if (dappRewardsSupply > pendingReward) {
+                dappToken.transfer(msg.sender, pendingReward);
+                dappRewardsSupply = dappRewardsSupply.sub(pendingReward);
+                userInfo.pending = 0;
+                userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
+            } else {
+                dappToken.transfer(msg.sender, dappRewardsSupply);
+                dappRewardsSupply = 0;
+                userInfo.pending = pendingReward.sub(dappRewardsSupply);
+                userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
+            }
         }
     }
 
