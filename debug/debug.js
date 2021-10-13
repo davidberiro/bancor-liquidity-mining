@@ -35,4 +35,12 @@ const contractB = new web3B.eth.Contract(dappStakingPoolABI, "0x05Aa229Aec102f78
         console.log(result);
         console.log(error);
     });
+    // test user info
+    await contractA.methods.userPoolInfo(0,"0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199").call(
+    {
+        from: '0x05Aa229Aec102f78CE0E852A812a388F076Aa555'
+    }, function(error, result){
+        console.log(result);
+        console.log(error);
+    });
 })();
