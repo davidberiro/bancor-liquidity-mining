@@ -348,11 +348,10 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         require(userInfo.bntLocked <= now, "BNT still locked");
         uint bntBal = bntToken.balanceOf(address(this));
         uint amount = userInfo.claimableBnt;
-        if(bntBal >= amount) {
-            userInfo.claimableBnt = 0;
-            userInfo.bntLocked = 0;
-            bntToken.transfer(msg.sender, amount);
-        }
+        require(bntBal >= amount, "insufficient bnt to claim");
+        userInfo.claimableBnt = 0;
+        userInfo.bntLocked = 0;
+        bntToken.transfer(msg.sender, amount);
     }
 
     // user must wait 24 hours for BNT to unlock, after can call and receive
@@ -362,15 +361,14 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
 
     // if pending bnt to burn, burn
     function burnBnt() external {
-        if(pendingBntIlBurn > 0) {
-            uint bntBal = bntToken.balanceOf(address(this));
-            if(bntBal >= pendingBntIlBurn) {
-                bntToken.transfer(address(0x000000000000000000000000000000000000dEaD), pendingBntIlBurn);
-                pendingBntIlBurn = 0;
-            } else {
-                bntToken.transfer(address(0x000000000000000000000000000000000000dEaD), bntBal);
-                pendingBntIlBurn = pendingBntIlBurn.sub(bntBal);
-            }
+        require(pendingBntIlBurn > 0, "no pending bnt to burn");
+        uint bntBal = bntToken.balanceOf(address(this));
+        if(bntBal >= pendingBntIlBurn) {
+            bntToken.transfer(address(0x000000000000000000000000000000000000dEaD), pendingBntIlBurn);
+            pendingBntIlBurn = 0;
+        } else {
+            bntToken.transfer(address(0x000000000000000000000000000000000000dEaD), bntBal);
+            pendingBntIlBurn = pendingBntIlBurn.sub(bntBal);
         }
     }
 
