@@ -17,7 +17,7 @@ contract Funder is Ownable {
         address _stakingContract,
         address _dappTokenContract,
         uint _rewardsPercentage // out of 10000
-    ) external
+    ) public
     {
         stakingContract = _stakingContract;
         dappTokenContract = IERC20(_dappTokenContract);
