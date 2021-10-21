@@ -29,7 +29,7 @@ contract Funder is Ownable {
         */
     function update(uint _rewardsPercentage) external {
         require(_msgSender() == owner(), "sender not authorized");
-        _rewardsPercentage = rewardsPercentage;
+        rewardsPercentage = _rewardsPercentage;
     }
 
     /**
