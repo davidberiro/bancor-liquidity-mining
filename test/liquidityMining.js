@@ -168,8 +168,11 @@ describe("Liquidity mining", function() {
     await dappBntTokenContract.connect(addr6).approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
     await dappBntTokenContract.connect(addr1).transfer(addr6.address, ethers.utils.parseEther("10"));
 
-    funderContract = await funderFactory.deploy(dappStakingPoolContract.address,dappTokenContract.address,7000);
+    // initiallize 0% for rewards
+    funderContract = await funderFactory.deploy(dappStakingPoolContract.address,dappTokenContract.address,0);
     await funderContract.deployed();
+    // update 44.45% rewards
+    await funderContract.update(4445);
     await dappTokenContract.mint(funderContract.address, ethers.utils.parseEther("1000000"));
   });
 
@@ -260,8 +263,8 @@ describe("Liquidity mining", function() {
     const postFundFunderBalance = await dappTokenContract.balanceOf(funderContract.address);
     expect(postFundFunderBalance.toString()).to.equal('0');
     expect(postFundDappSupply).to.equal(ethers.utils.parseEther("1200000"));
-    expect(postFundDappILSupply).to.equal(ethers.utils.parseEther("400000"));
-    expect(postFundDappRewardsSupply).to.equal(ethers.utils.parseEther("800000"));
+    expect(postFundDappILSupply).to.equal(ethers.utils.parseEther("655500"));
+    expect(postFundDappRewardsSupply).to.equal(ethers.utils.parseEther("544500"));
   });
 
   it("Should allow transfer position after full unstake", async function() {
