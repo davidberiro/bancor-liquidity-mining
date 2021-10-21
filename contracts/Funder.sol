@@ -17,7 +17,7 @@ contract Funder is Ownable {
         address _stakingContract,
         address _dappTokenContract,
         uint _rewardsPercentage // out of 10000
-    ) public
+    ) external
     {
         stakingContract = _stakingContract;
         dappTokenContract = IERC20(_dappTokenContract);
@@ -27,7 +27,7 @@ contract Funder is Ownable {
     /**
         * @dev update rewards percentage
         */
-    function update(uint _rewardsPercentage) public view {
+    function update(uint _rewardsPercentage) external {
         require(_msgSender() == owner(), "sender not authorized");
         _rewardsPercentage = rewardsPercentage;
     }
@@ -35,7 +35,7 @@ contract Funder is Ownable {
     /**
         * @dev fund
         */
-    function fund() public {
+    function fund() external {
         uint256 dappBal = dappTokenContract.balanceOf(address(this));
         uint256 rewardsAmt = (dappBal * rewardsPercentage)/10000;
         uint256 ILAmt = (dappBal * (10000 - rewardsPercentage))/10000;
