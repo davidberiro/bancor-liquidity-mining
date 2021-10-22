@@ -97,7 +97,7 @@ describe("Liquidity mining", function() {
 
     await network.provider.send("hardhat_setBalance", [
       dappMinterAddress,
-      "0x10000000000000",
+      "0x20000000000000",
     ]);
     await network.provider.send("hardhat_setBalance", [
       bntOwnerAddress,
@@ -168,7 +168,8 @@ describe("Liquidity mining", function() {
     await dappBntTokenContract.connect(addr6).approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
     await dappBntTokenContract.connect(addr1).transfer(addr6.address, ethers.utils.parseEther("10"));
 
-    funderContract = await funderFactory.deploy(dappStakingPoolContract.address,dappTokenContract.address,7000);
+    // initiallize 0% for rewards
+    funderContract = await funderFactory.deploy(dappStakingPoolContract.address,dappTokenContract.address,0);
     await funderContract.deployed();
     await dappTokenContract.mint(funderContract.address, ethers.utils.parseEther("1000000"));
   });
@@ -260,8 +261,38 @@ describe("Liquidity mining", function() {
     const postFundFunderBalance = await dappTokenContract.balanceOf(funderContract.address);
     expect(postFundFunderBalance.toString()).to.equal('0');
     expect(postFundDappSupply).to.equal(ethers.utils.parseEther("1200000"));
-    expect(postFundDappILSupply).to.equal(ethers.utils.parseEther("400000"));
-    expect(postFundDappRewardsSupply).to.equal(ethers.utils.parseEther("800000"));
+    expect(postFundDappILSupply).to.equal(ethers.utils.parseEther("1100000"));
+    expect(postFundDappRewardsSupply).to.equal(ethers.utils.parseEther("100000"));
+  });
+
+  it("Should update funder contract 44.45% rewards 55.55% IL", async function() {
+    const numerator = 4445;
+    const denominator = 10000
+    const prevDappILSupply = await dappStakingPoolContract.dappILSupply();
+    const prevDappRewardsSupply = await dappStakingPoolContract.dappRewardsSupply();
+    // update 44.45% rewards
+    await funderContract.update(numerator);
+    await dappTokenContract.mint(funderContract.address, ethers.utils.parseEther("1000000"));
+    await funderContract.fund();
+    const postFundDappILSupply = await dappStakingPoolContract.dappILSupply();
+    const postFundDappRewardsSupply = await dappStakingPoolContract.dappRewardsSupply();
+    expect(Number(postFundDappILSupply.sub(prevDappILSupply))).to.equal(1000000000000000000000000 * (1 - (numerator/denominator)));
+    expect(Number(postFundDappRewardsSupply.sub(prevDappRewardsSupply))).to.equal(1000000000000000000000000 * (numerator/denominator));
+  });
+
+  it("Should update funder contract 100% rewards 0% IL", async function() {
+    const numerator = 10000;
+    const denominator = 10000
+    const prevDappILSupply = await dappStakingPoolContract.dappILSupply();
+    const prevDappRewardsSupply = await dappStakingPoolContract.dappRewardsSupply();
+    // update 100% rewards
+    await funderContract.update(numerator);
+    await dappTokenContract.mint(funderContract.address, ethers.utils.parseEther("1000000"));
+    await funderContract.fund();
+    const postFundDappILSupply = await dappStakingPoolContract.dappILSupply();
+    const postFundDappRewardsSupply = await dappStakingPoolContract.dappRewardsSupply();
+    expect(Number(postFundDappILSupply.sub(prevDappILSupply))).to.equal(1000000000000000000000000 * (1 - (numerator/denominator)));
+    expect(Number(postFundDappRewardsSupply.sub(prevDappRewardsSupply))).to.equal(1000000000000000000000000 * (numerator/denominator));
   });
 
   it("Should allow transfer position after full unstake", async function() {
