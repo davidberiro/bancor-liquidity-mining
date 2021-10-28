@@ -22,10 +22,19 @@ async function main() {
     205000 // 20.5 DAPPs per block with 4 decimal precision
   ]);
   console.log("dapp Staking Pool Proxy deployed to:", dappStakingPoolProxy.address);
+  await dappStakingPoolFactory.attach(dappStakingPoolProxy.address);
 
   // start at 0% for rewards so all goes to IL
   const funderProxy = await upgrades.deployProxy(funderFactory, [dappStakingPoolProxy.address,"0x939b462ee3311f8926c047d2b576c389092b1649",0]);
   console.log("funder Proxy deployed to:", funderProxy.address);
+  await funderFactory.attach(funderProxy.address);
+
+  const gnosisSafe = '0x5288d36112fe21be1a24b236be887C90c3AE7090';
+ 
+  console.log("Transferring ownership of ProxyAdmin...");
+  // The owner of the ProxyAdmin can upgrade our contracts
+  await upgrades.admin.transferProxyAdminOwnership(gnosisSafe);
+  console.log("Transferred ownership of ProxyAdmin to:", gnosisSafe);
 }
 
 main()
