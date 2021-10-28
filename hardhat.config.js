@@ -2,6 +2,7 @@ require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-ethers");
 require("hardhat-abi-exporter");
 require("hardhat-gas-reporter");
+require('@openzeppelin/hardhat-upgrades');
 const config = require("./.config.json");
 
 /**
@@ -30,6 +31,10 @@ module.exports = {
       },
       blockGasLimit: 12e6
     },
+    rinkeby: {
+      url: `https://eth-rinkeby.alchemyapi.io/v2/${config.alchemyKey}`,
+      accounts: {mnemonic: config.mnemonic}
+    }
   },
   gasReporter: {
     currency: "USD",
