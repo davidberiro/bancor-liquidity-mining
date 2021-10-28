@@ -2,23 +2,23 @@
 pragma solidity ^0.6.12;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./interfaces/IDappStakingPool.sol";
 
 import "hardhat/console.sol";
 
-contract Funder is Ownable {
+contract Funder is OwnableUpgradeable {
 
     address public stakingContract;
     IERC20 public dappTokenContract;
     uint public rewardsPercentage;
   
-    constructor(
+    function initialize(
         address _stakingContract,
         address _dappTokenContract,
         uint _rewardsPercentage // out of 10000
-    ) public
-    {
+    ) external initializer {
+        __Ownable_init(); 
         stakingContract = _stakingContract;
         dappTokenContract = IERC20(_dappTokenContract);
         rewardsPercentage = _rewardsPercentage;
