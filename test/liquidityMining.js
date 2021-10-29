@@ -144,7 +144,6 @@ describe("Liquidity mining", function() {
       [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
       '1'
     );
-    // console.log(`added liquidity BNT: ${ethers.utils.parseEther("650000")/1e18} DAPP: ${ethers.utils.parseEther("1000000000")/1e18}`);
 
     const blockNumber = await ethers.provider.getBlockNumber();
 
@@ -159,6 +158,8 @@ describe("Liquidity mining", function() {
       // 100k DAPPs per day / 6500 avg blocks per day ~15 DAPPs per block
       ethers.utils.parseEther("15")
     ]);
+
+    console.log(`proxy pool address: ${dappStakingPoolContract.address}\npool address: ${await upgrades.erc1967.getImplementationAddress(dappStakingPoolContract.address)}`);
 
     await dappTokenContract.connect(addr2).approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
     await dappBntTokenContract.connect(addr2).approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
