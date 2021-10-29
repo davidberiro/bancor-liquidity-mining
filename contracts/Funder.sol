@@ -2,23 +2,23 @@
 pragma solidity ^0.6.12;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "./interfaces/IDappStakingPool.sol";
 
 import "hardhat/console.sol";
 
-contract Funder is Ownable {
+contract Funder is OwnableUpgradeable {
 
     address public stakingContract;
     IERC20 public dappTokenContract;
     uint public rewardsPercentage;
   
-    constructor(
+    function initialize(
         address _stakingContract,
         address _dappTokenContract,
         uint _rewardsPercentage // out of 10000
-    ) public
-    {
+    ) external {
+        __Ownable_init(); 
         stakingContract = _stakingContract;
         dappTokenContract = IERC20(_dappTokenContract);
         rewardsPercentage = _rewardsPercentage;
@@ -27,15 +27,14 @@ contract Funder is Ownable {
     /**
         * @dev update rewards percentage
         */
-    function update(uint _rewardsPercentage) public view {
-        require(_msgSender() == owner(), "sender not authorized");
-        _rewardsPercentage = rewardsPercentage;
+    function update(uint _rewardsPercentage) external onlyOwner {
+        rewardsPercentage = _rewardsPercentage;
     }
 
     /**
         * @dev fund
         */
-    function fund() public {
+    function fund() external {
         uint256 dappBal = dappTokenContract.balanceOf(address(this));
         uint256 rewardsAmt = (dappBal * rewardsPercentage)/10000;
         uint256 ILAmt = (dappBal * (10000 - rewardsPercentage))/10000;

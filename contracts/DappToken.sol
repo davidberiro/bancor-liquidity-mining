@@ -12,4 +12,8 @@ contract DappToken is ERC20('Dapp Token', 'DAPP'), Ownable {
     function burn(address account, uint256 amount) public onlyOwner {
         _burn(account, amount);
     }
+    
+    function decimals() public view virtual override returns (uint8) {
+        return 4;
+    }
 }

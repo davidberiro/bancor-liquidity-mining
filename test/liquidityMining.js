@@ -171,7 +171,6 @@ describe("Liquidity mining", function() {
       [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
       '1'
     );
-    // console.log(`added liquidity BNT: ${ethers.utils.parseEther("650000")/1e18} DAPP: ${ethers.utils.parseEther("1000000000")/1e18}`);
 
     // add lp liquidity
     await network.provider.request({
@@ -255,9 +254,8 @@ describe("Liquidity mining", function() {
     await liquidityProtectionSettingsContract.addPoolToWhitelist(dappBntAnchor);
 
     const blockNumber = await ethers.provider.getBlockNumber();
-    dappStakingPoolContract = await dappStakingPoolFactory.deploy();
-    await dappStakingPoolContract.deployed();
-    await dappStakingPoolContract.initialize(
+
+    dappStakingPoolContract = await upgrades.deployProxy(dappStakingPoolFactory, [
       liquidityProtectionContractAddress,
       liquidityProtectionStoreContractAddress,
       dappBntAnchor,
@@ -267,7 +265,9 @@ describe("Liquidity mining", function() {
       // DAPPs per block in production will have 4 decimal places
       // 100k DAPPs per day / 6500 avg blocks per day ~15 DAPPs per block
       ethers.utils.parseEther("15")
-    );
+    ]);
+
+    console.log(`proxy pool address: ${dappStakingPoolContract.address}\npool address: ${await upgrades.erc1967.getImplementationAddress(dappStakingPoolContract.address)}`);
 
 
     await dappTokenContract.connect(addr2).approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
@@ -275,15 +275,13 @@ describe("Liquidity mining", function() {
     await dappBntTokenContract.connect(addr1).transfer(addr2.address, ethers.utils.parseEther("10"));
     // await dappBntTokenContract.connect(addr1).transfer("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199", ethers.utils.parseEther("10"));
 
-    funderContract = await funderFactory.deploy(dappStakingPoolContract.address,dappTokenContract.address,7000);
-    await funderContract.deployed();
-    // await dappTokenContract.mint(funderContract.address, ethers.utils.parseEther("1000000"));
-    
+    // initiallize 0% for rewards
+    funderContract = await upgrades.deployProxy(funderFactory, [dappStakingPoolContract.address,dappTokenContract.address,0]);
+    await dappTokenContract.mint(funderContract.address, ethers.utils.parseEther("1000000"));
+
     console.log(`staking pool: ${dappStakingPoolContract.address}`)
     console.log(`dappBntTokenContract: ${dappBntTokenContract.address}\n`)
-    
-    await liquidityProtectionSettingsContract.setProtectionDelays(60,200);
-    await dappTokenContract.connect(addr1).approve(dappStakingPoolContract.address, ethers.utils.parseEther("100000000"));
+  });
 
     // comment out if testing IL downside without DAPP as IL protection
     // await dappStakingPoolContract.fund(ethers.utils.parseEther("140000"), ethers.utils.parseEther("60000"));
