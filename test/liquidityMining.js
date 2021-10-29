@@ -263,8 +263,7 @@ describe("Liquidity mining", function() {
       bntAddress,
       blockNumber,
       // DAPPs per block in production will have 4 decimal places
-      // 100k DAPPs per day / 6500 avg blocks per day ~15 DAPPs per block
-      ethers.utils.parseEther("15")
+      205000
     ]);
 
     console.log(`proxy pool address: ${dappStakingPoolContract.address}\npool address: ${await upgrades.erc1967.getImplementationAddress(dappStakingPoolContract.address)}`);
