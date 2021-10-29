@@ -27,8 +27,7 @@ contract Funder is OwnableUpgradeable {
     /**
         * @dev update rewards percentage
         */
-    function update(uint _rewardsPercentage) external {
-        require(_msgSender() == owner(), "sender not authorized");
+    function update(uint _rewardsPercentage) external onlyOwner {
         rewardsPercentage = _rewardsPercentage;
     }
 
