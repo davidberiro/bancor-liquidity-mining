@@ -33,7 +33,7 @@ module.exports = {
     },
     rinkeby: {
       url: `https://eth-rinkeby.alchemyapi.io/v2/${config.alchemyKey}`,
-      accounts: {mnemonic: config.mnemonic}
+      accounts: config.keys
     }
   },
   gasReporter: {
