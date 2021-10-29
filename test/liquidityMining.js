@@ -281,7 +281,6 @@ describe("Liquidity mining", function() {
 
     console.log(`staking pool: ${dappStakingPoolContract.address}`)
     console.log(`dappBntTokenContract: ${dappBntTokenContract.address}\n`)
-  });
 
     // comment out if testing IL downside without DAPP as IL protection
     // await dappStakingPoolContract.fund(ethers.utils.parseEther("140000"), ethers.utils.parseEther("60000"));
@@ -420,7 +419,7 @@ describe("Liquidity mining", function() {
   //   await ethers.provider.send("evm_increaseTime", [600]); // 10m in seconds
   // })
 
-  it("Should deplete BNT IL", async function() {
+  it.skip("Should deplete BNT IL", async function() {
     console.log('add more liquidity1');
     // add more liquidity
     await dappTokenContract.connect(addr1).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
