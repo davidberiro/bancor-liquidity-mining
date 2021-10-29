@@ -169,8 +169,9 @@ describe("Liquidity mining", function() {
     await dappBntTokenContract.connect(addr1).transfer(addr6.address, ethers.utils.parseEther("10"));
 
     // initiallize 0% for rewards
-    funderContract = await funderFactory.deploy(dappStakingPoolContract.address,dappTokenContract.address,0);
+    funderContract = await funderFactory.deploy();
     await funderContract.deployed();
+    await funderContract.initialize(dappStakingPoolContract.address,dappTokenContract.address,0);
     await dappTokenContract.mint(funderContract.address, ethers.utils.parseEther("1000000"));
   });
 
