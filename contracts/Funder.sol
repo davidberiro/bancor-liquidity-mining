@@ -17,7 +17,7 @@ contract Funder is OwnableUpgradeable {
         address _stakingContract,
         address _dappTokenContract,
         uint _rewardsPercentage // out of 10000
-    ) external initializer {
+    ) external {
         __Ownable_init(); 
         stakingContract = _stakingContract;
         dappTokenContract = IERC20(_dappTokenContract);
