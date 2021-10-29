@@ -3,6 +3,7 @@ require("@nomiclabs/hardhat-ethers");
 require("hardhat-abi-exporter");
 require("hardhat-gas-reporter");
 require('@openzeppelin/hardhat-upgrades');
+require("@nomiclabs/hardhat-etherscan");
 const config = require("./.config.json");
 
 /**
@@ -48,5 +49,10 @@ module.exports = {
   },
   abiExporter: {
     flat: true
+  },
+  etherscan: {
+    // Your API key for Etherscan
+    // Obtain one at https://etherscan.io/
+    apiKey: config.etherscanApiKey
   }
 };
