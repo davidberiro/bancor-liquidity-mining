@@ -147,9 +147,8 @@ describe("Liquidity mining", function() {
     // console.log(`added liquidity BNT: ${ethers.utils.parseEther("650000")/1e18} DAPP: ${ethers.utils.parseEther("1000000000")/1e18}`);
 
     const blockNumber = await ethers.provider.getBlockNumber();
-    dappStakingPoolContract = await dappStakingPoolFactory.deploy();
-    await dappStakingPoolContract.deployed();
-    await dappStakingPoolContract.initialize(
+
+    dappStakingPoolContract = await upgrades.deployProxy(dappStakingPoolFactory, [
       liquidityProtectionContractAddress,
       liquidityProtectionStoreContractAddress,
       dappBntAnchor,
@@ -159,7 +158,7 @@ describe("Liquidity mining", function() {
       // DAPPs per block in production will have 4 decimal places
       // 100k DAPPs per day / 6500 avg blocks per day ~15 DAPPs per block
       ethers.utils.parseEther("15")
-    );
+    ]);
 
     await dappTokenContract.connect(addr2).approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
     await dappBntTokenContract.connect(addr2).approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
@@ -169,9 +168,7 @@ describe("Liquidity mining", function() {
     await dappBntTokenContract.connect(addr1).transfer(addr6.address, ethers.utils.parseEther("10"));
 
     // initiallize 0% for rewards
-    funderContract = await funderFactory.deploy();
-    await funderContract.deployed();
-    await funderContract.initialize(dappStakingPoolContract.address,dappTokenContract.address,0);
+    funderContract = await upgrades.deployProxy(funderFactory, [dappStakingPoolContract.address,dappTokenContract.address,0]);
     await dappTokenContract.mint(funderContract.address, ethers.utils.parseEther("1000000"));
   });
 
