@@ -25,6 +25,7 @@ const wethAddress = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
 const bancorEthAddress = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 const ethBntAddress = "0xb1CD6e4153B2a390Cf00A6556b0fC1458C4A5533";
 const zeroAddress = "0x0000000000000000000000000000000000000000";
+const gnosisSafe = '0x5288d36112fe21be1a24b236be887C90c3AE7090';
 
 describe("Liquidity mining", function() {
   this.timeout(100000);
@@ -93,7 +94,7 @@ describe("Liquidity mining", function() {
 
     const dappStakingPoolFactory = await ethers.getContractFactory("DappStakingPool", addr1);
     const dappTokenFactory = await ethers.getContractFactory("DappToken", addr1);
-    const funderFactory = await ethers.getContractFactory("Funder");
+    const funderFactory = await ethers.getContractFactory("Funder", addr1);
 
     await network.provider.send("hardhat_setBalance", [
       dappMinterAddress,
@@ -562,5 +563,18 @@ describe("Liquidity mining", function() {
     // decrease total entries unstake dapp bnt
     const postUnstakePoolEntries = await dappStakingPoolContract.userPoolTotalEntries(6);
     expect(postPoolEntries.sub(postUnstakePoolEntries)).to.equal(1);
+  });
+
+  it("Should allow update pool & funder owner to gnosis safe", async function() {
+    await dappStakingPoolContract.transferOwnership(gnosisSafe);
+    await funderContract.transferOwnership(gnosisSafe);
+    const postOwnerPool = await dappStakingPoolContract.owner();
+    const postOwnerFunder = await funderContract.owner();
+    expect(postOwnerPool).to.equal(gnosisSafe);
+    expect(postOwnerFunder).to.equal(gnosisSafe);
+  });
+
+  it("Should allow update proxy admin to gnosis safe", async function() {
+    await upgrades.admin.transferProxyAdminOwnership(gnosisSafe);
   });
 });
