@@ -31,6 +31,11 @@ async function main() {
 
   const gnosisSafe = '0x5288d36112fe21be1a24b236be887C90c3AE7090';
 
+  console.log("Transferring ownership of Pool & Funder...");
+  await dappStakingPoolProxy.transferOwnership(gnosisSafe);
+  await funderProxy.transferOwnership(gnosisSafe);
+  console.log("Transferred ownership of Pool & Funder to:", gnosisSafe);
+
   console.log("Transferring ownership of ProxyAdmin...");
   // The owner of the ProxyAdmin can upgrade our contracts
   await upgrades.admin.transferProxyAdminOwnership(gnosisSafe);
@@ -38,10 +43,10 @@ async function main() {
 
   const poolContract = await upgrades.erc1967.getImplementationAddress(dappStakingPoolProxy.address);
   const funderContract = await upgrades.erc1967.getImplementationAddress(funderProxy.address);
-  
-  console.log("verifying on etherscan...");
   console.log(`pool contract: ${poolContract}`);
   console.log(`funder contract: ${funderContract}`);
+  
+  console.log("verifying on etherscan...");
   await hre.run("verify:verify", {
     address: poolContract,
     constructorArguments: []

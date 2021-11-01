@@ -34,7 +34,8 @@ module.exports = {
     },
     rinkeby: {
       url: `https://eth-rinkeby.alchemyapi.io/v2/${config.alchemyKey}`,
-      accounts: config.keys
+      accounts: config.keys,
+      blockGasLimit: 12e6
     }
   },
   gasReporter: {
