@@ -50,15 +50,15 @@ async function main() {
   
   // wait 60s for etherscan backend to catch up
   await delay(60);
-  // console.log("verifying on etherscan...");
-  // await hre.run("verify:verify", {
-  //   address: poolContract,
-  //   constructorArguments: []
-  // });
-  // await hre.run("verify:verify", {
-  //   address: funderContract,
-  //   constructorArguments: []
-  // });
+  console.log("verifying on etherscan...");
+  await hre.run("verify:verify", {
+    address: poolContract,
+    constructorArguments: []
+  });
+  await hre.run("verify:verify", {
+    address: funderContract,
+    constructorArguments: []
+  });
 }
 
 main()
