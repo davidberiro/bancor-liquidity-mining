@@ -4,6 +4,7 @@
 // When running the script with `hardhat run <script>` you'll find the Hardhat
 // Runtime Environment's members available in the global scope.
 const hre = require("hardhat");
+const delay = s => new Promise(res => setTimeout(res, s*1000));
 
 async function main() {
   await hre.run('compile');
@@ -21,12 +22,10 @@ async function main() {
     await hre.ethers.provider.getBlockNumber(), // start block
     205000 // 20.5 DAPPs per block with 4 decimal precision
   ]);
-  console.log("dapp Staking Pool Proxy deployed to:", dappStakingPoolProxy.address);
   await dappStakingPoolFactory.attach(dappStakingPoolProxy.address);
 
   // start at 0% for rewards so all goes to IL
   const funderProxy = await upgrades.deployProxy(funderFactory, [dappStakingPoolProxy.address,"0x939b462ee3311f8926c047d2b576c389092b1649",0]);
-  console.log("funder Proxy deployed to:", funderProxy.address);
   await funderFactory.attach(funderProxy.address);
 
   const gnosisSafe = '0x5288d36112fe21be1a24b236be887C90c3AE7090';
@@ -44,8 +43,14 @@ async function main() {
   const poolContract = await upgrades.erc1967.getImplementationAddress(dappStakingPoolProxy.address);
   const funderContract = await upgrades.erc1967.getImplementationAddress(funderProxy.address);
   console.log(`pool contract: ${poolContract}`);
+  console.log("pool proxy:", dappStakingPoolProxy.address);
   console.log(`funder contract: ${funderContract}`);
+  console.log("funder proxy:", funderProxy.address);
+  console.log(`proxy admin contract: ${await upgrades.erc1967.getAdminAddress(dappStakingPoolProxy.address)}`);
   
+  console.log("wait 60s for etherscan backend to catch up");
+  await delay(60);
+
   console.log("verifying on etherscan...");
   await hre.run("verify:verify", {
     address: poolContract,
