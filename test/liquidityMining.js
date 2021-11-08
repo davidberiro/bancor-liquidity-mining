@@ -8,7 +8,7 @@ const liquidityProtectionAbi = require('../abi/ILiquidityProtection.json');
 const converterRegistryDataAbi = require('../abi/IConverterRegistryData.json');
 const bancorNetworkAbi = require('../abi/IBancorNetwork.json');
 const converterAbi = require('../abi/ILiquidityPoolConverter.json');
-const erc20Abi = require('../abi/IERC20.json');
+const erc20Abi = require('../abi/IERC20Upgradeable.json');
 
 const liquidityProtectionSettingsAdminAddress = "0xdfeE8DC240c6CadC2c7f7f9c257c259914dEa84E";
 const liquidityProtectionSettingsContractAddress = "0xF7D28FaA1FE9Ea53279fE6e3Cde75175859bdF46";

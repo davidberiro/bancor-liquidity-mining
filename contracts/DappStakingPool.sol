@@ -3,7 +3,8 @@ pragma solidity ^0.6.12;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+// import "@openzeppelin/contracts/token/ERC20/IERC20Upgradeable.sol";
+import "./SafeERC20Upgradeable.sol";
 import "./interfaces/ILiquidityProtection.sol";
 import "./interfaces/ILiquidityProtectionStore.sol";
 import "./interfaces/ITransferPositionCallback.sol";
@@ -12,6 +13,7 @@ import "hardhat/console.sol";
 
 contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
     using SafeMath for uint;
+    using SafeERC20Upgradeable for IERC20Upgradeable;
 
     struct UserPoolInfo {
         uint amount;
@@ -38,8 +40,8 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
     ILiquidityProtection public liquidityProtection;
     ILiquidityProtectionStore public liquidityProtectionStore;
 
-    IERC20 public dappToken;
-    IERC20 public bntToken;
+    IERC20Upgradeable public dappToken;
+    IERC20Upgradeable public bntToken;
 
     address public dappBntPoolAnchor;
 
@@ -74,12 +76,12 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         liquidityProtection = ILiquidityProtection(_liquidityProtection);
         liquidityProtectionStore = ILiquidityProtectionStore(_liquidityProtectionStore);
         dappBntPoolAnchor = _dappBntPoolAnchor;
-        dappToken = IERC20(_dappToken);
-        bntToken = IERC20(_bntToken);
+        dappToken = IERC20Upgradeable(_dappToken);
+        bntToken = IERC20Upgradeable(_bntToken);
         startBlock = _startBlock;
         dappPerBlock = _dappPerBlock;
 
-        dappToken.approve(address(liquidityProtection), uint(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF));
+        dappToken.safeApprove(address(liquidityProtection), uint(0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF));
         poolInfo.push(PoolInfo({
             allocPoint: 0,
             timeLocked: 0,
@@ -178,7 +180,8 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         PoolInfo storage pool = poolInfo[pid];
 
         require(userInfo.positionId == 0, "user already has position in pool");
-        (, address poolToken,, uint lpAmount, uint dappAmount,,,) = liquidityProtectionStore.protectedLiquidity(newId);
+        (address newProvider, address poolToken,, uint lpAmount, uint dappAmount,,,) = liquidityProtectionStore.protectedLiquidity(newId);
+        require(address(this) == newProvider);
         require(poolToken == dappBntPoolAnchor, "wrong position type");
 
         if (userInfo.amount > 0) {
@@ -202,7 +205,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
     // stake dapp-bnt tokens
     function stakeDappBnt(uint amount, uint pid) external {
         updateRewards(pid);
-        IERC20(dappBntPoolAnchor).transferFrom(msg.sender, address(this), amount);
+        IERC20Upgradeable(dappBntPoolAnchor).safeTransferFrom(msg.sender, address(this), amount);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
 
@@ -233,7 +236,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         userInfo.amount = userInfo.amount.sub(amount);
         userInfo.lpAmount = userInfo.lpAmount.sub(amount);
         userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
-        IERC20(dappBntPoolAnchor).transfer(msg.sender, amount);
+        IERC20Upgradeable(dappBntPoolAnchor).safeTransfer(msg.sender, amount);
         
         if(userInfo.amount == 0) {
             userPoolTotalEntries[pid]--;
@@ -257,7 +260,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             _unstakeDapp(pid);
             uint postDappBal = dappToken.balanceOf(msg.sender);
             uint finalAmount = amount.add(postDappBal).sub(prevDappBal);
-            dappToken.transferFrom(msg.sender, address(this), finalAmount);
+            dappToken.safeTransferFrom(msg.sender, address(this), finalAmount);
 
             uint positionId = liquidityProtection.addLiquidity(dappBntPoolAnchor, address(dappToken), finalAmount);
             uint lpAmount = getLpAmount(positionId);
@@ -269,7 +272,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
             userInfo.depositTime = now;
         } else {
-            dappToken.transferFrom(msg.sender, address(this), amount);
+            dappToken.safeTransferFrom(msg.sender, address(this), amount);
             uint positionId = liquidityProtection.addLiquidity(dappBntPoolAnchor, address(dappToken), amount);
             uint lpAmount = getLpAmount(positionId);
             pool.totalLpStaked = pool.totalLpStaked.add(lpAmount);
@@ -296,12 +299,12 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         uint pendingReward = userInfo.pending.add(userInfo.amount.mul(pool.accDappPerShare).div(1e12).sub(userInfo.rewardDebt));
         if(pendingReward > 0) {
             if (dappRewardsSupply > pendingReward) {
-                dappToken.transfer(msg.sender, pendingReward);
+                dappToken.safeTransfer(msg.sender, pendingReward);
                 dappRewardsSupply = dappRewardsSupply.sub(pendingReward);
                 userInfo.pending = 0;
                 userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
             } else {
-                dappToken.transfer(msg.sender, dappRewardsSupply);
+                dappToken.safeTransfer(msg.sender, dappRewardsSupply);
                 dappRewardsSupply = 0;
                 userInfo.pending = pendingReward.sub(dappRewardsSupply);
                 userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
@@ -310,13 +313,14 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
     }
 
     function fund(uint dappRewardsAmount, uint dappILAmount) external {
-        dappToken.transferFrom(msg.sender, address(this), dappRewardsAmount);
-        dappToken.transferFrom(msg.sender, address(this), dappILAmount);
+        dappToken.safeTransferFrom(msg.sender, address(this), dappRewardsAmount);
+        dappToken.safeTransferFrom(msg.sender, address(this), dappILAmount);
         dappRewardsSupply = dappRewardsSupply.add(dappRewardsAmount);
         dappILSupply = dappILSupply.add(dappILAmount);
     }
 
     function add(uint256 _allocPoint, uint256 _timeLocked) external onlyOwner {
+        updatePools();
         uint256 lastRewardBlock = block.number > startBlock ? block.number : startBlock;
         totalAllocPoint = totalAllocPoint.add(_allocPoint);
         poolInfo.push(PoolInfo({
@@ -331,6 +335,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
     }
 
     function set(uint256 pid, uint256 _allocPoint) external onlyOwner {
+        updatePools();
         uint256 prevAllocPoint = poolInfo[pid].allocPoint;
         poolInfo[pid].allocPoint = _allocPoint;
         if (prevAllocPoint != _allocPoint) {
@@ -339,6 +344,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
     }
 
     function setDappPerBlock(uint _dappPerBlock) external onlyOwner {
+        updatePools();
         dappPerBlock = _dappPerBlock;
     }
 
@@ -351,7 +357,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         require(bntBal >= amount, "insufficient bnt to claim");
         userInfo.claimableBnt = 0;
         userInfo.bntLocked = 0;
-        bntToken.transfer(msg.sender, amount);
+        bntToken.safeTransfer(msg.sender, amount);
     }
 
     // user must wait 24 hours for BNT to unlock, after can call and receive
@@ -364,11 +370,18 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         require(pendingBntIlBurn > 0, "no pending bnt to burn");
         uint bntBal = bntToken.balanceOf(address(this));
         if(bntBal >= pendingBntIlBurn) {
-            bntToken.transfer(address(0x000000000000000000000000000000000000dEaD), pendingBntIlBurn);
+            bntToken.safeTransfer(address(0x000000000000000000000000000000000000dEaD), pendingBntIlBurn);
             pendingBntIlBurn = 0;
         } else {
-            bntToken.transfer(address(0x000000000000000000000000000000000000dEaD), bntBal);
+            bntToken.safeTransfer(address(0x000000000000000000000000000000000000dEaD), bntBal);
             pendingBntIlBurn = pendingBntIlBurn.sub(bntBal);
+        }
+    }
+
+    function updatePools() public {
+        uint length = poolInfo.length;
+        for(uint pid = 0; pid < length; ++pid) {
+            updateRewards(pid);
         }
     }
 
@@ -398,16 +411,16 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             if (dappILSupply >= diff) {
                 pendingBntIlBurn = pendingBntIlBurn.add(networkAmount);
                 dappILSupply = dappILSupply.sub(diff);
-                dappToken.transfer(msg.sender, finalDappAmount);
+                dappToken.safeTransfer(msg.sender, finalDappAmount);
             } else {
-                dappToken.transfer(msg.sender, dappReceived.add(dappILSupply));
+                dappToken.safeTransfer(msg.sender, dappReceived.add(dappILSupply));
                 userInfo.claimableBnt = userInfo.claimableBnt.add(networkAmount);
                 userInfo.bntLocked = now + 24 hours;
                 dappILSupply = 0;
             }
         } else {
             pendingBntIlBurn = pendingBntIlBurn.add(networkAmount);
-            dappToken.transfer(msg.sender, dappReceived);
+            dappToken.safeTransfer(msg.sender, dappReceived);
         }
 
         userInfo.dappStaked = 0;
