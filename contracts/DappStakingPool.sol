@@ -266,7 +266,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             userInfo.positionId = positionId;
             userInfo.amount = userInfo.amount.add(lpAmount);
             userInfo.dappStaked = finalAmount;
-            userInfo.rewardDebt = lpAmount.mul(pool.accDappPerShare).div(1e12);
+            userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
             userInfo.depositTime = now;
         } else {
             dappToken.transferFrom(msg.sender, address(this), amount);
@@ -277,7 +277,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
             userInfo.positionId = positionId;
             userInfo.amount = userInfo.amount.add(lpAmount);
             userInfo.dappStaked = amount;
-            userInfo.rewardDebt = lpAmount.mul(pool.accDappPerShare).div(1e12);
+            userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
             userInfo.depositTime = now;
         }
     }
