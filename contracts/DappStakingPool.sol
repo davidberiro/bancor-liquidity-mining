@@ -2,16 +2,17 @@
 pragma solidity ^0.6.12;
 
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/Initializable.sol";
 import "@openzeppelin/contracts/math/SafeMath.sol";
-// import "@openzeppelin/contracts/token/ERC20/IERC20Upgradeable.sol";
 import "./SafeERC20Upgradeable.sol";
+import "./ReentrancyGuardUpgradeable.sol";
 import "./interfaces/ILiquidityProtection.sol";
 import "./interfaces/ILiquidityProtectionStore.sol";
 import "./interfaces/ITransferPositionCallback.sol";
 
 import "hardhat/console.sol";
 
-contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
+contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITransferPositionCallback {
     using SafeMath for uint;
     using SafeERC20Upgradeable for IERC20Upgradeable;
 
@@ -72,7 +73,8 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         uint _startBlock,
         uint _dappPerBlock
     ) external initializer {
-        __Ownable_init(); 
+        __Ownable_init();
+        __ReentrancyGuard_init();
         liquidityProtection = ILiquidityProtection(_liquidityProtection);
         liquidityProtectionStore = ILiquidityProtectionStore(_liquidityProtectionStore);
         dappBntPoolAnchor = _dappBntPoolAnchor;
@@ -157,7 +159,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         return lpAmount;
     }
 
-    function updateRewards(uint pid) public {
+    function updateRewards(uint pid) public nonReentrant {
         PoolInfo storage pool = poolInfo[pid];
         if (block.number <= pool.lastRewardBlock) {
             return;
@@ -285,14 +287,14 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         }
     }
 
-    function unstakeDapp(uint pid) public {
+    function unstakeDapp(uint pid) public nonReentrant {
         PoolInfo memory pool = poolInfo[pid];
         UserPoolInfo memory userInfo = userPoolInfo[pid][msg.sender];
         require(userInfo.depositTime + pool.timeLocked <= now, "Still locked");
         _unstakeDapp(pid);
     }
 
-    function harvest(uint pid) public {
+    function harvest(uint pid) public nonReentrant {
         updateRewards(pid);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
@@ -378,7 +380,7 @@ contract DappStakingPool is OwnableUpgradeable, ITransferPositionCallback {
         }
     }
 
-    function updatePools() public {
+    function updatePools() public nonReentrant {
         uint length = poolInfo.length;
         for(uint pid = 0; pid < length; ++pid) {
             updateRewards(pid);
