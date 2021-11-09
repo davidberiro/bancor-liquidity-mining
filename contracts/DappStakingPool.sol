@@ -193,10 +193,7 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
     function stakeDappBnt(uint amount, uint pid) external {
         _updateRewards(pid);
 
-        uint prevAmount = IERC20Upgradeable(dappBntPoolAnchor).balanceOf(address(this));
-        IERC20Upgradeable(dappBntPoolAnchor).safeTransferFrom(msg.sender, address(this), amount);
-        uint postAmount = IERC20Upgradeable(dappBntPoolAnchor).balanceOf(address(this));
-        uint postDeflation = postAmount.sub(prevAmount);
+        amount = _deflationCheck(IERC20Upgradeable(dappBntPoolAnchor), msg.sender, address(this), amount);
 
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
@@ -208,10 +205,10 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
             userPoolTotalEntries[pid]++;
         }
 
-        pool.totalLpStaked = pool.totalLpStaked.add(postDeflation);
-        pool.totalDappBntStaked = pool.totalDappBntStaked.add(postDeflation);
-        userInfo.amount = userInfo.amount.add(postDeflation);
-        userInfo.lpAmount = userInfo.lpAmount.add(postDeflation);
+        pool.totalLpStaked = pool.totalLpStaked.add(amount);
+        pool.totalDappBntStaked = pool.totalDappBntStaked.add(amount);
+        userInfo.amount = userInfo.amount.add(amount);
+        userInfo.lpAmount = userInfo.lpAmount.add(amount);
         userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
         userInfo.depositTime = now;
     }
@@ -251,20 +248,21 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
             uint prevDappBal = dappToken.balanceOf(msg.sender);
             _unstakeDapp(pid);
             uint postDappBal = dappToken.balanceOf(msg.sender);
-            uint finalAmount = amount.add(postDappBal).sub(prevDappBal);
-            dappToken.safeTransferFrom(msg.sender, address(this), finalAmount);
+            amount = amount.add(postDappBal).sub(prevDappBal);
+            
+            amount = _deflationCheck(dappToken, msg.sender, address(this), amount);
 
-            uint positionId = liquidityProtection.addLiquidity(dappBntPoolAnchor, address(dappToken), finalAmount);
+            uint positionId = liquidityProtection.addLiquidity(dappBntPoolAnchor, address(dappToken), amount);
             uint lpAmount = getLpAmount(positionId);
             pool.totalLpStaked = pool.totalLpStaked.add(lpAmount);
-            pool.totalDappStaked = pool.totalDappStaked.add(finalAmount);
+            pool.totalDappStaked = pool.totalDappStaked.add(amount);
             userInfo.positionId = positionId;
             userInfo.amount = userInfo.amount.add(lpAmount);
-            userInfo.dappStaked = finalAmount;
+            userInfo.dappStaked = amount;
             userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
             userInfo.depositTime = now;
         } else {
-            dappToken.safeTransferFrom(msg.sender, address(this), amount);
+            amount = _deflationCheck(dappToken, msg.sender, address(this), amount);
             uint positionId = liquidityProtection.addLiquidity(dappBntPoolAnchor, address(dappToken), amount);
             uint lpAmount = getLpAmount(positionId);
             pool.totalLpStaked = pool.totalLpStaked.add(lpAmount);
@@ -305,8 +303,8 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
     }
 
     function fund(uint dappRewardsAmount, uint dappILAmount) external {
-        dappToken.safeTransferFrom(msg.sender, address(this), dappRewardsAmount);
-        dappToken.safeTransferFrom(msg.sender, address(this), dappILAmount);
+        dappRewardsAmount = _deflationCheck(dappToken, msg.sender, address(this), dappRewardsAmount);
+        dappILAmount = _deflationCheck(dappToken, msg.sender, address(this), dappILAmount);
         dappRewardsSupply = dappRewardsSupply.add(dappRewardsAmount);
         dappILSupply = dappILSupply.add(dappILAmount);
     }
@@ -368,6 +366,13 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
             bntToken.safeTransfer(address(0x000000000000000000000000000000000000dEaD), bntBal);
             pendingBntIlBurn = pendingBntIlBurn.sub(bntBal);
         }
+    }
+
+    function _deflationCheck(IERC20Upgradeable token, address from, address to, uint amount) internal returns (uint) {
+        uint prevDappBal = token.balanceOf(to);
+        token.safeTransferFrom(from, to, amount);
+        uint postDappBal = token.balanceOf(to);
+        return postDappBal.sub(prevDappBal);
     }
 
     function _updateRewards(uint pid) internal {
