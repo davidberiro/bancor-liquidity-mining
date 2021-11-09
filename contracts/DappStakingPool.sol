@@ -207,7 +207,12 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
     // stake dapp-bnt tokens
     function stakeDappBnt(uint amount, uint pid) external {
         updateRewards(pid);
+
+        uint prevAmount = IERC20Upgradeable(dappBntPoolAnchor).balanceOf(address(this));
         IERC20Upgradeable(dappBntPoolAnchor).safeTransferFrom(msg.sender, address(this), amount);
+        uint postAmount = IERC20Upgradeable(dappBntPoolAnchor).balanceOf(address(this));
+        uint postDeflation = postAmount.sub(prevAmount);
+
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
 
@@ -218,10 +223,10 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
             userPoolTotalEntries[pid]++;
         }
 
-        pool.totalLpStaked = pool.totalLpStaked.add(amount);
-        pool.totalDappBntStaked = pool.totalDappBntStaked.add(amount);
-        userInfo.amount = userInfo.amount.add(amount);
-        userInfo.lpAmount = userInfo.lpAmount.add(amount);
+        pool.totalLpStaked = pool.totalLpStaked.add(postDeflation);
+        pool.totalDappBntStaked = pool.totalDappBntStaked.add(postDeflation);
+        userInfo.amount = userInfo.amount.add(postDeflation);
+        userInfo.lpAmount = userInfo.lpAmount.add(postDeflation);
         userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
         userInfo.depositTime = now;
     }
@@ -322,7 +327,7 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
     }
 
     function add(uint256 _allocPoint, uint256 _timeLocked) external onlyOwner {
-        updatePools();
+        _updatePools();
         uint256 lastRewardBlock = block.number > startBlock ? block.number : startBlock;
         totalAllocPoint = totalAllocPoint.add(_allocPoint);
         poolInfo.push(PoolInfo({
@@ -337,7 +342,7 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
     }
 
     function set(uint256 pid, uint256 _allocPoint) external onlyOwner {
-        updatePools();
+        _updatePools();
         uint256 prevAllocPoint = poolInfo[pid].allocPoint;
         poolInfo[pid].allocPoint = _allocPoint;
         if (prevAllocPoint != _allocPoint) {
@@ -346,7 +351,7 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
     }
 
     function setDappPerBlock(uint _dappPerBlock) external onlyOwner {
-        updatePools();
+        _updatePools();
         dappPerBlock = _dappPerBlock;
     }
 
@@ -380,7 +385,7 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
         }
     }
 
-    function updatePools() public nonReentrant {
+    function _updatePools() internal {
         uint length = poolInfo.length;
         for(uint pid = 0; pid < length; ++pid) {
             updateRewards(pid);
