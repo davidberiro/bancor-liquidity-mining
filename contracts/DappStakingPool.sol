@@ -368,14 +368,14 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
         }
     }
 
-    function _deflationCheck(IERC20Upgradeable token, address from, address to, uint amount) internal returns (uint) {
+    function _deflationCheck(IERC20Upgradeable token, address from, address to, uint amount) private returns (uint) {
         uint prevDappBal = token.balanceOf(to);
         token.safeTransferFrom(from, to, amount);
         uint postDappBal = token.balanceOf(to);
         return postDappBal.sub(prevDappBal);
     }
 
-    function _updateRewards(uint pid) internal {
+    function _updateRewards(uint pid) private {
         PoolInfo storage pool = poolInfo[pid];
         if (block.number <= pool.lastRewardBlock) {
             return;
@@ -390,14 +390,14 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
         pool.lastRewardBlock = block.number;
     }
 
-    function _updatePools() internal {
+    function _updatePools() private {
         uint length = poolInfo.length;
         for(uint pid = 0; pid < length; ++pid) {
             _updateRewards(pid);
         }
     }
 
-    function _unstakeDapp(uint pid) internal {
+    function _unstakeDapp(uint pid) private {
         harvest(pid);
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
