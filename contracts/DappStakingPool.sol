@@ -193,8 +193,6 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
     function stakeDappBnt(uint amount, uint pid) external {
         _updateRewards(pid);
 
-        amount = _deflationCheck(IERC20Upgradeable(dappBntPoolAnchor), msg.sender, address(this), amount);
-
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
 
@@ -204,6 +202,8 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
         } else {
             userPoolTotalEntries[pid]++;
         }
+
+        amount = _deflationCheck(IERC20Upgradeable(dappBntPoolAnchor), msg.sender, address(this), amount);
 
         pool.totalLpStaked = pool.totalLpStaked.add(amount);
         pool.totalDappBntStaked = pool.totalDappBntStaked.add(amount);
@@ -289,15 +289,15 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
         uint pendingReward = userInfo.pending.add(userInfo.amount.mul(pool.accDappPerShare).div(1e12).sub(userInfo.rewardDebt));
         if(pendingReward > 0) {
             if (dappRewardsSupply > pendingReward) {
-                dappToken.safeTransfer(msg.sender, pendingReward);
                 dappRewardsSupply = dappRewardsSupply.sub(pendingReward);
                 userInfo.pending = 0;
                 userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
+                dappToken.safeTransfer(msg.sender, pendingReward);
             } else {
-                dappToken.safeTransfer(msg.sender, dappRewardsSupply);
                 dappRewardsSupply = 0;
                 userInfo.pending = pendingReward.sub(dappRewardsSupply);
                 userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
+                dappToken.safeTransfer(msg.sender, dappRewardsSupply);
             }
         }
     }
@@ -360,11 +360,11 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
         require(pendingBntIlBurn > 0, "no pending bnt to burn");
         uint bntBal = bntToken.balanceOf(address(this));
         if(bntBal >= pendingBntIlBurn) {
-            bntToken.safeTransfer(address(0x000000000000000000000000000000000000dEaD), pendingBntIlBurn);
             pendingBntIlBurn = 0;
+            bntToken.safeTransfer(address(0x000000000000000000000000000000000000dEaD), pendingBntIlBurn);
         } else {
-            bntToken.safeTransfer(address(0x000000000000000000000000000000000000dEaD), bntBal);
             pendingBntIlBurn = pendingBntIlBurn.sub(bntBal);
+            bntToken.safeTransfer(address(0x000000000000000000000000000000000000dEaD), bntBal);
         }
     }
 
@@ -425,9 +425,9 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
                 dappILSupply = dappILSupply.sub(diff);
                 dappToken.safeTransfer(msg.sender, finalDappAmount);
             } else {
-                dappToken.safeTransfer(msg.sender, dappReceived.add(dappILSupply));
                 userInfo.claimableBnt = userInfo.claimableBnt.add(networkAmount);
                 userInfo.bntLocked = now + 24 hours;
+                dappToken.safeTransfer(msg.sender, dappReceived.add(dappILSupply));
                 dappILSupply = 0;
             }
         } else {
