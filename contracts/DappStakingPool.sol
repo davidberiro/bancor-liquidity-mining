@@ -199,7 +199,7 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
             userPoolTotalEntries[pid]++;
         }
 
-        amount = _deflationCheck(IERC20Upgradeable(dappBntPoolAnchor), msg.sender, address(this), amount);
+        amount = _deflationCheck(IERC20Upgradeable(dappBntPoolAnchor), amount);
 
         pool.totalLpStaked = pool.totalLpStaked.add(amount);
         pool.totalDappBntStaked = pool.totalDappBntStaked.add(amount);
@@ -246,7 +246,7 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
             uint postDappBal = dappToken.balanceOf(msg.sender);
             amount = amount.add(postDappBal).sub(prevDappBal);
             
-            amount = _deflationCheck(dappToken, msg.sender, address(this), amount);
+            amount = _deflationCheck(dappToken, amount);
 
             uint positionId = liquidityProtection.addLiquidity(dappBntPoolAnchor, address(dappToken), amount);
             uint lpAmount = _getLpAmount(positionId);
@@ -258,7 +258,7 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
             userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
             userInfo.depositTime = now;
         } else {
-            amount = _deflationCheck(dappToken, msg.sender, address(this), amount);
+            amount = _deflationCheck(dappToken, amount);
             uint positionId = liquidityProtection.addLiquidity(dappBntPoolAnchor, address(dappToken), amount);
             uint lpAmount = _getLpAmount(positionId);
             pool.totalLpStaked = pool.totalLpStaked.add(lpAmount);
@@ -300,8 +300,8 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
     }
 
     function fund(uint dappRewardsAmount, uint dappILAmount) external nonReentrant {
-        dappRewardsAmount = _deflationCheck(dappToken, msg.sender, address(this), dappRewardsAmount);
-        dappILAmount = _deflationCheck(dappToken, msg.sender, address(this), dappILAmount);
+        dappRewardsAmount = _deflationCheck(dappToken, dappRewardsAmount);
+        dappILAmount = _deflationCheck(dappToken, dappILAmount);
         dappRewardsSupply = dappRewardsSupply.add(dappRewardsAmount);
         dappILSupply = dappILSupply.add(dappILAmount);
     }
@@ -371,10 +371,10 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
         return lpAmount;
     }
 
-    function _deflationCheck(IERC20Upgradeable token, address from, address to, uint amount) private returns (uint) {
-        uint prevDappBal = token.balanceOf(to);
-        token.safeTransferFrom(from, to, amount);
-        uint postDappBal = token.balanceOf(to);
+    function _deflationCheck(IERC20Upgradeable token, uint amount) private returns (uint) {
+        uint prevDappBal = token.balanceOf(address(this));
+        token.safeTransferFrom(msg.sender, address(this), amount);
+        uint postDappBal = token.balanceOf(address(this));
         return postDappBal.sub(prevDappBal);
     }
 
