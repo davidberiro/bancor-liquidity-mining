@@ -154,13 +154,8 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
         return userInfo.pending.add(userInfo.amount.mul(accDappPerShare).div(1e12).sub(userInfo.rewardDebt));
     }
 
-    function getLpAmount(uint positionId) private view returns (uint) {
-        (,,, uint lpAmount,,,,) = liquidityProtectionStore.protectedLiquidity(positionId);
-        return lpAmount;
-    }
 
-    function onTransferPosition(uint256 newId, address provider, bytes calldata data) external override {
-        require(msg.sender == address(liquidityProtection), "liquidity protection only");
+    function onTransferPosition(uint256 newId, address provider, bytes calldata data) external override nonReentrant {
         uint pid = abi.decode(data, (uint));
         _updateRewards(pid);
 
@@ -191,7 +186,7 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
 
     // if there is no more bnt for single sided staking, users can still
     // stake dapp-bnt tokens
-    function stakeDappBnt(uint amount, uint pid) external {
+    function stakeDappBnt(uint amount, uint pid) external nonReentrant {
         _updateRewards(pid);
 
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
@@ -254,7 +249,7 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
             amount = _deflationCheck(dappToken, msg.sender, address(this), amount);
 
             uint positionId = liquidityProtection.addLiquidity(dappBntPoolAnchor, address(dappToken), amount);
-            uint lpAmount = getLpAmount(positionId);
+            uint lpAmount = _getLpAmount(positionId);
             pool.totalLpStaked = pool.totalLpStaked.add(lpAmount);
             pool.totalDappStaked = pool.totalDappStaked.add(amount);
             userInfo.positionId = positionId;
@@ -265,7 +260,7 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
         } else {
             amount = _deflationCheck(dappToken, msg.sender, address(this), amount);
             uint positionId = liquidityProtection.addLiquidity(dappBntPoolAnchor, address(dappToken), amount);
-            uint lpAmount = getLpAmount(positionId);
+            uint lpAmount = _getLpAmount(positionId);
             pool.totalLpStaked = pool.totalLpStaked.add(lpAmount);
             pool.totalDappStaked = pool.totalDappStaked.add(amount);
             userInfo.positionId = positionId;
@@ -303,7 +298,7 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
         }
     }
 
-    function fund(uint dappRewardsAmount, uint dappILAmount) external {
+    function fund(uint dappRewardsAmount, uint dappILAmount) external nonReentrant {
         dappRewardsAmount = _deflationCheck(dappToken, msg.sender, address(this), dappRewardsAmount);
         dappILAmount = _deflationCheck(dappToken, msg.sender, address(this), dappILAmount);
         dappRewardsSupply = dappRewardsSupply.add(dappRewardsAmount);
@@ -340,7 +335,7 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
     }
 
     // user must wait 24 hours for BNT to unlock, after can call and receive
-    function claimUserBnt(uint pid) external {
+    function claimUserBnt(uint pid) external nonReentrant {
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         require(userInfo.bntLocked <= now, "BNT still locked");
         uint bntBal = bntToken.balanceOf(address(this));
@@ -352,21 +347,26 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
     }
 
     // user must wait 24 hours for BNT to unlock, after can call and receive
-    function claimBnt(uint num) external {
+    function claimBnt(uint num) external nonReentrant {
         liquidityProtection.claimBalance(0, num + 1);
     }
 
     // if pending bnt to burn, burn
-    function burnBnt() external {
+    function burnBnt() external nonReentrant {
         require(pendingBntIlBurn > 0, "no pending bnt to burn");
         uint bntBal = bntToken.balanceOf(address(this));
         if(bntBal >= pendingBntIlBurn) {
-            pendingBntIlBurn = 0;
             bntToken.safeTransfer(address(0x000000000000000000000000000000000000dEaD), pendingBntIlBurn);
+            pendingBntIlBurn = 0;
         } else {
             pendingBntIlBurn = pendingBntIlBurn.sub(bntBal);
             bntToken.safeTransfer(address(0x000000000000000000000000000000000000dEaD), bntBal);
         }
+    }
+
+    function _getLpAmount(uint positionId) private view returns (uint) {
+        (,,, uint lpAmount,,,,) = liquidityProtectionStore.protectedLiquidity(positionId);
+        return lpAmount;
     }
 
     function _deflationCheck(IERC20Upgradeable token, address from, address to, uint amount) private returns (uint) {
@@ -403,7 +403,7 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
         UserPoolInfo storage userInfo = userPoolInfo[pid][msg.sender];
         PoolInfo storage pool = poolInfo[pid];
 
-        uint prevLpAmount = getLpAmount(userInfo.positionId);
+        uint prevLpAmount = _getLpAmount(userInfo.positionId);
         uint preDappBal = dappToken.balanceOf(address(this));
 
         (uint targetAmount,, uint networkAmount) = liquidityProtection.removeLiquidityReturn(userInfo.positionId, 1000000, block.timestamp);
