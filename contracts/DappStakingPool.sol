@@ -290,10 +290,11 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
                 userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
                 dappToken.safeTransfer(msg.sender, pendingReward);
             } else {
-                dappRewardsSupply = 0;
                 userInfo.pending = pendingReward.sub(dappRewardsSupply);
                 userInfo.rewardDebt = userInfo.amount.mul(pool.accDappPerShare).div(1e12);
-                dappToken.safeTransfer(msg.sender, dappRewardsSupply);
+                uint amount = dappRewardsSupply;
+                dappRewardsSupply = 0;
+                dappToken.safeTransfer(msg.sender, amount);
             }
         }
     }
