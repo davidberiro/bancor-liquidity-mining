@@ -421,6 +421,9 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
 
         uint finalDappAmount = targetAmount < userInfo.dappStaked ? targetAmount : userInfo.dappStaked;
 
+        userInfo.dappStaked = 0;
+        userInfo.positionId = 0;
+
         if(finalDappAmount > dappReceived) {
             uint diff = finalDappAmount.sub(dappReceived);
             if (dappILSupply >= diff) {
@@ -430,16 +433,14 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
             } else {
                 userInfo.claimableBnt = userInfo.claimableBnt.add(networkAmount);
                 userInfo.bntLocked = now + 24 hours;
-                dappToken.safeTransfer(msg.sender, dappReceived.add(dappILSupply));
+                uint amount = dappILSupply;
                 dappILSupply = 0;
+                dappToken.safeTransfer(msg.sender, dappReceived.add(amount));
             }
         } else {
             pendingBntIlBurn = pendingBntIlBurn.add(networkAmount);
             dappToken.safeTransfer(msg.sender, dappReceived);
         }
-
-        userInfo.dappStaked = 0;
-        userInfo.positionId = 0;
         
         if(userInfo.amount == 0) {
             userPoolTotalEntries[pid]--;
