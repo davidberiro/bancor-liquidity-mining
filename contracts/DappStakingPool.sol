@@ -356,8 +356,9 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
         require(pendingBntIlBurn > 0, "no pending bnt to burn");
         uint bntBal = bntToken.balanceOf(address(this));
         if(bntBal >= pendingBntIlBurn) {
-            bntToken.safeTransfer(address(0x000000000000000000000000000000000000dEaD), pendingBntIlBurn);
+            uint amount = pendingBntIlBurn;
             pendingBntIlBurn = 0;
+            bntToken.safeTransfer(address(0x000000000000000000000000000000000000dEaD), amount);
         } else {
             pendingBntIlBurn = pendingBntIlBurn.sub(bntBal);
             bntToken.safeTransfer(address(0x000000000000000000000000000000000000dEaD), bntBal);
