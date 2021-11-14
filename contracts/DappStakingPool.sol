@@ -161,6 +161,7 @@ contract DappStakingPool is OwnableUpgradeable, ReentrancyGuardUpgradeable, ITra
      * @dev Transfers position to pools contract
      */
     function onTransferPosition(uint newId, address provider, bytes calldata data) external override {
+        require(msg.sender == address(liquidityProtection), "Liquidity protection only");
         uint pid = abi.decode(data, (uint));
         _updateRewards(pid);
 
