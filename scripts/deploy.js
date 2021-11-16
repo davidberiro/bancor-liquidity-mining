@@ -22,11 +22,9 @@ async function main() {
     await hre.ethers.provider.getBlockNumber(), // start block
     205000 // 20.5 DAPPs per block with 4 decimal precision
   ]);
-  await dappStakingPoolFactory.attach(dappStakingPoolProxy.address);
 
   // start at 0% for rewards so all goes to IL
   const funderProxy = await upgrades.deployProxy(funderFactory, [dappStakingPoolProxy.address,"0x939b462ee3311f8926c047d2b576c389092b1649",0]);
-  await funderFactory.attach(funderProxy.address);
 
   const gnosisSafe = '0x5288d36112fe21be1a24b236be887C90c3AE7090';
 
