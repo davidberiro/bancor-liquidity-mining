@@ -8,7 +8,7 @@ const liquidityProtectionAbi = require('../abi/ILiquidityProtection.json');
 const converterRegistryDataAbi = require('../abi/IConverterRegistryData.json');
 const bancorNetworkAbi = require('../abi/IBancorNetwork.json');
 const converterAbi = require('../abi/ILiquidityPoolConverter.json');
-const erc20Abi = require('../abi/IERC20.json');
+const erc20Abi = require('../abi/IERC20Upgradeable.json');
 
 const liquidityProtectionSettingsAdminAddress = "0xdfeE8DC240c6CadC2c7f7f9c257c259914dEa84E";
 const liquidityProtectionSettingsContractAddress = "0xF7D28FaA1FE9Ea53279fE6e3Cde75175859bdF46";
@@ -25,6 +25,7 @@ const wethAddress = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
 const bancorEthAddress = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 const ethBntAddress = "0xb1CD6e4153B2a390Cf00A6556b0fC1458C4A5533";
 const zeroAddress = "0x0000000000000000000000000000000000000000";
+const gnosisSafe = '0x5288d36112fe21be1a24b236be887C90c3AE7090';
 
 describe("Liquidity mining", function() {
   this.timeout(100000);
@@ -93,7 +94,7 @@ describe("Liquidity mining", function() {
 
     const dappStakingPoolFactory = await ethers.getContractFactory("DappStakingPool", addr1);
     const dappTokenFactory = await ethers.getContractFactory("DappToken", addr1);
-    const funderFactory = await ethers.getContractFactory("Funder");
+    const funderFactory = await ethers.getContractFactory("Funder", addr1);
 
     await network.provider.send("hardhat_setBalance", [
       dappMinterAddress,
@@ -144,12 +145,10 @@ describe("Liquidity mining", function() {
       [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
       '1'
     );
-    // console.log(`added liquidity BNT: ${ethers.utils.parseEther("650000")/1e18} DAPP: ${ethers.utils.parseEther("1000000000")/1e18}`);
 
     const blockNumber = await ethers.provider.getBlockNumber();
-    dappStakingPoolContract = await dappStakingPoolFactory.deploy();
-    await dappStakingPoolContract.deployed();
-    await dappStakingPoolContract.initialize(
+
+    dappStakingPoolContract = await upgrades.deployProxy(dappStakingPoolFactory, [
       liquidityProtectionContractAddress,
       liquidityProtectionStoreContractAddress,
       dappBntAnchor,
@@ -158,8 +157,10 @@ describe("Liquidity mining", function() {
       blockNumber,
       // DAPPs per block in production will have 4 decimal places
       // 100k DAPPs per day / 6500 avg blocks per day ~15 DAPPs per block
-      ethers.utils.parseEther("15")
-    );
+      205000
+    ]);
+
+    console.log(`proxy pool address: ${dappStakingPoolContract.address}\npool address: ${await upgrades.erc1967.getImplementationAddress(dappStakingPoolContract.address)}`);
 
     await dappTokenContract.connect(addr2).approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
     await dappBntTokenContract.connect(addr2).approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
@@ -169,8 +170,7 @@ describe("Liquidity mining", function() {
     await dappBntTokenContract.connect(addr1).transfer(addr6.address, ethers.utils.parseEther("10"));
 
     // initiallize 0% for rewards
-    funderContract = await funderFactory.deploy(dappStakingPoolContract.address,dappTokenContract.address,0);
-    await funderContract.deployed();
+    funderContract = await upgrades.deployProxy(funderFactory, [dappStakingPoolContract.address,dappTokenContract.address,0]);
     await dappTokenContract.mint(funderContract.address, ethers.utils.parseEther("1000000"));
   });
 
@@ -563,5 +563,18 @@ describe("Liquidity mining", function() {
     // decrease total entries unstake dapp bnt
     const postUnstakePoolEntries = await dappStakingPoolContract.userPoolTotalEntries(6);
     expect(postPoolEntries.sub(postUnstakePoolEntries)).to.equal(1);
+  });
+
+  it("Should allow update pool & funder owner to gnosis safe", async function() {
+    await dappStakingPoolContract.transferOwnership(gnosisSafe);
+    await funderContract.transferOwnership(gnosisSafe);
+    const postOwnerPool = await dappStakingPoolContract.owner();
+    const postOwnerFunder = await funderContract.owner();
+    expect(postOwnerPool).to.equal(gnosisSafe);
+    expect(postOwnerFunder).to.equal(gnosisSafe);
+  });
+
+  it("Should allow update proxy admin to gnosis safe", async function() {
+    await upgrades.admin.transferProxyAdminOwnership(gnosisSafe);
   });
 });

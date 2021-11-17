@@ -6,3 +6,5 @@ artifacts
 abi
 .env
 .config.json
+unknown*
+rinkeby.json
