@@ -9,7 +9,7 @@ const liquidityProtectionAbi = require('../abi/ILiquidityProtection.json');
 const converterRegistryDataAbi = require('../abi/IConverterRegistryData.json');
 const bancorNetworkAbi = require('../abi/IBancorNetwork.json');
 const converterAbi = require('../abi/ILiquidityPoolConverter.json');
-const erc20Abi = require('../abi/IERC20.json');
+const erc20Abi = require('../abi/IERC20Upgradeable.json');
 
 const liquidityProtectionSettingsAdminAddress = "0xdfeE8DC240c6CadC2c7f7f9c257c259914dEa84E";
 const liquidityProtectionSettingsContractAddress = "0xF7D28FaA1FE9Ea53279fE6e3Cde75175859bdF46";
@@ -27,6 +27,7 @@ const wethAddress = "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2";
 const bancorEthAddress = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 const ethBntAddress = "0xb1CD6e4153B2a390Cf00A6556b0fC1458C4A5533";
 const zeroAddress = "0x0000000000000000000000000000000000000000";
+const gnosisSafe = '0x5288d36112fe21be1a24b236be887C90c3AE7090';
 
 describe("Liquidity mining", function() {
   this.timeout(10000000);
@@ -104,7 +105,7 @@ describe("Liquidity mining", function() {
 
     const dappStakingPoolFactory = await ethers.getContractFactory("DappStakingPool", addr1);
     const dappTokenFactory = await ethers.getContractFactory("DappToken", addr1);
-    const funderFactory = await ethers.getContractFactory("Funder");
+    const funderFactory = await ethers.getContractFactory("Funder", addr1);
 
     await network.provider.send("hardhat_setBalance", [
       dappMinterAddress,
@@ -263,6 +264,10 @@ describe("Liquidity mining", function() {
       bntAddress,
       blockNumber,
       // DAPPs per block in production will have 4 decimal places
+<<<<<<< HEAD
+=======
+      // 100k DAPPs per day / 6500 avg blocks per day ~15 DAPPs per block
+>>>>>>> master
       205000
     ]);
 
@@ -457,6 +462,7 @@ describe("Liquidity mining", function() {
       '0'
     );
 
+<<<<<<< HEAD
     // claim
     console.log('claim');
     await ethers.provider.send("evm_increaseTime", [600]); // 10m in seconds
@@ -467,4 +473,62 @@ describe("Liquidity mining", function() {
     await dappStakingPoolContract.connect(lp6).claimUserBnt(0);
     console.log((await bntTokenContract.balanceOf(lp6.address)).toString())
   })
+=======
+    // advance time
+    await ethers.provider.send("evm_increaseTime", [8640000]); // 100 days in seconds
+
+    // unstake compare initial and post balance
+    await dappStakingPoolContract.connect(user).unstakeDapp(6);
+    const preBal = await dappStakingPoolContract.pendingBntIlBurn();
+
+    // advance time
+    await ethers.provider.send("evm_increaseTime", [86400]); // 1 days in seconds
+
+    // burn BNT bal
+    await dappStakingPoolContract.connect(user).burnBnt();
+    
+    const postBal = await dappStakingPoolContract.pendingBntIlBurn();
+    expect(preBal).to.be.above(postBal);
+  });
+
+  it("Should allow user to unstake DAPP and DAPP-BNT LP from timelocked pool", async function() {
+    let user = addr6;
+    let userInfo;
+    const prevPoolEntries = await dappStakingPoolContract.userPoolTotalEntries(6);
+    await dappStakingPoolContract.connect(user).stakeDappBnt(ethers.utils.parseEther("1"), 6);
+
+    // increase total entries stake dapp bnt
+    const postPoolEntries = await dappStakingPoolContract.userPoolTotalEntries(6);
+    expect(postPoolEntries.sub(prevPoolEntries)).to.equal(1);
+    await dappStakingPoolContract.connect(user).stakeDapp(ethers.utils.parseEther("1"), 6);
+
+    // advance time
+    nowBlock = await ethers.provider.getBlockNumber();
+    timestamp = (await ethers.provider.getBlock(nowBlock)).timestamp;
+    await ethers.provider.send("evm_mine", [ timestamp + 1000 ]);
+
+    await dappStakingPoolContract.connect(user).unstakeDapp(6);
+    await dappStakingPoolContract.connect(user).unstakeDappBnt('1000000000000000000', 6);
+    userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
+    expect(userInfo.amount).to.equal(ethers.utils.parseEther("0"));
+    expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
+    
+    // decrease total entries unstake dapp bnt
+    const postUnstakePoolEntries = await dappStakingPoolContract.userPoolTotalEntries(6);
+    expect(postPoolEntries.sub(postUnstakePoolEntries)).to.equal(1);
+  });
+
+  it("Should allow update pool & funder owner to gnosis safe", async function() {
+    await dappStakingPoolContract.transferOwnership(gnosisSafe);
+    await funderContract.transferOwnership(gnosisSafe);
+    const postOwnerPool = await dappStakingPoolContract.owner();
+    const postOwnerFunder = await funderContract.owner();
+    expect(postOwnerPool).to.equal(gnosisSafe);
+    expect(postOwnerFunder).to.equal(gnosisSafe);
+  });
+
+  it("Should allow update proxy admin to gnosis safe", async function() {
+    await upgrades.admin.transferProxyAdminOwnership(gnosisSafe);
+  });
+>>>>>>> master
 });

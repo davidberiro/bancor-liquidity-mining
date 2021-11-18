@@ -38,6 +38,9 @@ module.exports = {
         blockNumber: 12786615,
         url: `https://eth-mainnet.alchemyapi.io/v2/${config.alchemyKey}`
       },
+    rinkeby: {
+      url: `https://eth-rinkeby.alchemyapi.io/v2/${config.alchemyKey}`,
+      accounts: config.keys,
       blockGasLimit: 12e6
     }
   },
