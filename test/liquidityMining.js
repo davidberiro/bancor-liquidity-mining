@@ -117,21 +117,21 @@ describe("Liquidity mining", function() {
     ]);
 
     // issue dapp
-    await dappTokenContract.mint(addr1.address, ethers.utils.parseEther("100000000000"));
-    await dappTokenContract.mint(addr2.address, ethers.utils.parseEther("100000000000"));
-    await dappTokenContract.mint(addr3.address, ethers.utils.parseEther("100000000000"));
-    await dappTokenContract.mint(addr4.address, ethers.utils.parseEther("100000000000"));
-    await dappTokenContract.mint(addr5.address, ethers.utils.parseEther("100000000000"));
-    await dappTokenContract.mint(addr6.address, ethers.utils.parseEther("100000000000"));
-    await dappTokenContract.mint(addr7.address, ethers.utils.parseEther("100000000000"));
-    await dappTokenContract.mint(addr8.address, ethers.utils.parseEther("100000000000"));
+    await dappTokenContract.mint(addr1.address, ethers.utils.parseUnits("100000000000",4));
+    await dappTokenContract.mint(addr2.address, ethers.utils.parseUnits("100000000000",4));
+    await dappTokenContract.mint(addr3.address, ethers.utils.parseUnits("100000000000",4));
+    await dappTokenContract.mint(addr4.address, ethers.utils.parseUnits("100000000000",4));
+    await dappTokenContract.mint(addr5.address, ethers.utils.parseUnits("100000000000",4));
+    await dappTokenContract.mint(addr6.address, ethers.utils.parseUnits("100000000000",4));
+    await dappTokenContract.mint(addr7.address, ethers.utils.parseUnits("100000000000",4));
+    await dappTokenContract.mint(addr8.address, ethers.utils.parseUnits("100000000000",4));
     // issue dapp
-    await dappTokenContract.mint("0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097", ethers.utils.parseEther("100000000000"));
-    await dappTokenContract.mint("0xcd3b766ccdd6ae721141f452c550ca635964ce71", ethers.utils.parseEther("100000000000"));
-    await dappTokenContract.mint("0x2546bcd3c84621e976d8185a91a922ae77ecec30", ethers.utils.parseEther("100000000000"));
-    await dappTokenContract.mint("0xbda5747bfd65f08deb54cb465eb87d40e51b197e", ethers.utils.parseEther("100000000000"));
-    await dappTokenContract.mint("0xdd2fd4581271e230360230f9337d5c0430bf44c0", ethers.utils.parseEther("100000000000"));
-    await dappTokenContract.mint("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199", ethers.utils.parseEther("100000000000"));
+    await dappTokenContract.mint("0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097", ethers.utils.parseUnits("100000000000",4));
+    await dappTokenContract.mint("0xcd3b766ccdd6ae721141f452c550ca635964ce71", ethers.utils.parseUnits("100000000000",4));
+    await dappTokenContract.mint("0x2546bcd3c84621e976d8185a91a922ae77ecec30", ethers.utils.parseUnits("100000000000",4));
+    await dappTokenContract.mint("0xbda5747bfd65f08deb54cb465eb87d40e51b197e", ethers.utils.parseUnits("100000000000",4));
+    await dappTokenContract.mint("0xdd2fd4581271e230360230f9337d5c0430bf44c0", ethers.utils.parseUnits("100000000000",4));
+    await dappTokenContract.mint("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199", ethers.utils.parseUnits("100000000000",4));
     // issue bnt
     await bntTokenContract.issue("0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097", ethers.utils.parseEther("100000000000"));
     await bntTokenContract.issue("0xcd3b766ccdd6ae721141f452c550ca635964ce71", ethers.utils.parseEther("100000000000"));
@@ -163,13 +163,12 @@ describe("Liquidity mining", function() {
       }
     );
 
-
-    await dappTokenContract.connect(addr1).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
+    await dappTokenContract.connect(addr1).approve(converterDappBntAddress, ethers.utils.parseUnits("10000000000",4));
     await bntToken.connect(addr1).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
     //  1 DAPP ~ 0.007301 BNT
     await dappConverterContract.addLiquidity(
       [dappTokenContract.address, bntAddress],
-      [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
+      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("650000")],
       '1'
     );
 
@@ -179,11 +178,11 @@ describe("Liquidity mining", function() {
       params: ["0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097"],
     });
     lp1 = await ethers.getSigner("0xdf3e18d64bc6a983f673ab319ccae4f1a57c7097");
-    await dappTokenContract.connect(lp1).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
+    await dappTokenContract.connect(lp1).approve(converterDappBntAddress, ethers.utils.parseUnits("10000000000",4));
     await bntToken.connect(lp1).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
     await dappConverterContract.connect(lp1).addLiquidity(
       [dappTokenContract.address, bntAddress],
-      [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
+      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("650000")],
       '1'
     );
 
@@ -192,11 +191,11 @@ describe("Liquidity mining", function() {
       params: ["0xcd3b766ccdd6ae721141f452c550ca635964ce71"],
     });
     lp2 = await ethers.getSigner("0xcd3b766ccdd6ae721141f452c550ca635964ce71");
-    await dappTokenContract.connect(lp2).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
+    await dappTokenContract.connect(lp2).approve(converterDappBntAddress, ethers.utils.parseUnits("10000000000",4));
     await bntToken.connect(lp2).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
     await dappConverterContract.connect(lp2).addLiquidity(
       [dappTokenContract.address, bntAddress],
-      [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
+      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("650000")],
       '1'
     );
 
@@ -205,11 +204,11 @@ describe("Liquidity mining", function() {
       params: ["0x2546bcd3c84621e976d8185a91a922ae77ecec30"],
     });
     lp3 = await ethers.getSigner("0x2546bcd3c84621e976d8185a91a922ae77ecec30");
-    await dappTokenContract.connect(lp3).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
+    await dappTokenContract.connect(lp3).approve(converterDappBntAddress, ethers.utils.parseUnits("10000000000",4));
     await bntToken.connect(lp3).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
     await dappConverterContract.connect(lp3).addLiquidity(
       [dappTokenContract.address, bntAddress],
-      [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
+      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("650000")],
       '1'
     );
 
@@ -218,11 +217,11 @@ describe("Liquidity mining", function() {
       params: ["0xbda5747bfd65f08deb54cb465eb87d40e51b197e"],
     });
     lp4 = await ethers.getSigner("0xbda5747bfd65f08deb54cb465eb87d40e51b197e");
-    await dappTokenContract.connect(lp4).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
+    await dappTokenContract.connect(lp4).approve(converterDappBntAddress, ethers.utils.parseUnits("10000000000",4));
     await bntToken.connect(lp4).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
     await dappConverterContract.connect(lp4).addLiquidity(
       [dappTokenContract.address, bntAddress],
-      [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
+      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("650000")],
       '1'
     );
 
@@ -231,11 +230,11 @@ describe("Liquidity mining", function() {
       params: ["0xdd2fd4581271e230360230f9337d5c0430bf44c0"],
     });
     lp5 = await ethers.getSigner("0xdd2fd4581271e230360230f9337d5c0430bf44c0");
-    await dappTokenContract.connect(lp5).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
+    await dappTokenContract.connect(lp5).approve(converterDappBntAddress, ethers.utils.parseUnits("10000000000",4));
     await bntToken.connect(lp5).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
     await dappConverterContract.connect(lp5).addLiquidity(
       [dappTokenContract.address, bntAddress],
-      [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
+      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("650000")],
       '1'
     );
 
@@ -244,11 +243,11 @@ describe("Liquidity mining", function() {
       params: ["0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199"],
     });
     lp6 = await ethers.getSigner("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199");
-    await dappTokenContract.connect(lp6).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
+    await dappTokenContract.connect(lp6).approve(converterDappBntAddress, ethers.utils.parseUnits("10000000000",4));
     await bntToken.connect(lp6).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
     await dappConverterContract.connect(lp6).addLiquidity(
       [dappTokenContract.address, bntAddress],
-      [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
+      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("650000")],
       '1'
     );
     
@@ -270,14 +269,16 @@ describe("Liquidity mining", function() {
     console.log(`proxy pool address: ${dappStakingPoolContract.address}\npool address: ${await upgrades.erc1967.getImplementationAddress(dappStakingPoolContract.address)}`);
 
 
-    await dappTokenContract.connect(addr2).approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
+    await dappTokenContract.connect(addr2).approve(dappStakingPoolContract.address, ethers.utils.parseUnits("1000000",4));
+
     await dappBntTokenContract.connect(addr2).approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
-    await dappBntTokenContract.connect(addr1).transfer(addr2.address, ethers.utils.parseEther("10"));
+
+    // await dappBntTokenContract.connect(addr1).transfer(addr2.address, ethers.utils.parseEther("10"));
     // await dappBntTokenContract.connect(addr1).transfer("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199", ethers.utils.parseEther("10"));
 
     // initiallize 0% for rewards
     funderContract = await upgrades.deployProxy(funderFactory, [dappStakingPoolContract.address,dappTokenContract.address,0]);
-    await dappTokenContract.mint(funderContract.address, ethers.utils.parseEther("1000000"));
+    await dappTokenContract.mint(funderContract.address, ethers.utils.parseUnits("1000000",4));
 
     console.log(`staking pool: ${dappStakingPoolContract.address}`)
     console.log(`dappBntTokenContract: ${dappBntTokenContract.address}\n`)
@@ -285,7 +286,7 @@ describe("Liquidity mining", function() {
     // comment out if testing IL downside without DAPP as IL protection
     // await dappStakingPoolContract.fund(ethers.utils.parseEther("140000"), ethers.utils.parseEther("60000"));
 
-    await dappTokenContract.connect(addr1).approve(bancorNetworkContract.address, '98999800000000000000000000000');
+    await dappTokenContract.connect(addr1).approve(bancorNetworkContract.address, '989998000000000');
     await bntToken.connect(addr1).approve(bancorNetworkContract.address, '8911974684313573287562');
     
     // console.log(`${addr1.address}\nDAPP: ${(await dappTokenContract.balanceOf(addr1.address)).toString()}\nBNT: ${(await bntTokenContract.balanceOf(addr1.address)).toString()}\nBNT/DAPP LP: ${(await dappBntTokenContract.balanceOf(addr1.address)).toString()}\n`)
@@ -301,33 +302,33 @@ describe("Liquidity mining", function() {
   });
 
   it("Should allow deploy lp", async function() {
-    await dappTokenContract.connect(lp1).approve(dappStakingPoolContract.address, '989998000000000000000000');
-    await dappStakingPoolContract.connect(lp1).stakeDapp('989998000000000000000000', 0);
+    await dappTokenContract.connect(lp1).approve(dappStakingPoolContract.address, '9899980000');
+    await dappStakingPoolContract.connect(lp1).stakeDapp('9899980000', 0);
   })
 
   it("Should allow deploy lp", async function() {
-    await dappTokenContract.connect(lp2).approve(dappStakingPoolContract.address, '989998000000000000000000');
-    await dappStakingPoolContract.connect(lp2).stakeDapp('989998000000000000000000', 0);
+    await dappTokenContract.connect(lp2).approve(dappStakingPoolContract.address, '9899980000');
+    await dappStakingPoolContract.connect(lp2).stakeDapp('9899980000', 0);
   })
 
   it("Should allow deploy lp", async function() {
-    await dappTokenContract.connect(lp3).approve(dappStakingPoolContract.address, '989998000000000000000000');
-    await dappStakingPoolContract.connect(lp3).stakeDapp('989998000000000000000000', 0);
+    await dappTokenContract.connect(lp3).approve(dappStakingPoolContract.address, '9899980000');
+    await dappStakingPoolContract.connect(lp3).stakeDapp('9899980000', 0);
   })
 
   it("Should allow deploy lp", async function() {
-    await dappTokenContract.connect(lp4).approve(dappStakingPoolContract.address, '989998000000000000000000');
-    await dappStakingPoolContract.connect(lp4).stakeDapp('989998000000000000000000', 0);
+    await dappTokenContract.connect(lp4).approve(dappStakingPoolContract.address, '9899980000');
+    await dappStakingPoolContract.connect(lp4).stakeDapp('9899980000', 0);
   })
 
   it("Should allow deploy lp", async function() {
-    await dappTokenContract.connect(lp5).approve(dappStakingPoolContract.address, '989998000000000000000000');
-    await dappStakingPoolContract.connect(lp5).stakeDapp('989998000000000000000000', 0);
+    await dappTokenContract.connect(lp5).approve(dappStakingPoolContract.address, '9899980000');
+    await dappStakingPoolContract.connect(lp5).stakeDapp('9899980000', 0);
   })
 
   it("Should allow deploy lp", async function() {
-    await dappTokenContract.connect(lp6).approve(dappStakingPoolContract.address, '1000000000000000000000000');
-    await dappStakingPoolContract.connect(lp6).stakeDapp('1000000000000000000000000', 0);
+    await dappTokenContract.connect(lp6).approve(dappStakingPoolContract.address, '10000000000');
+    await dappStakingPoolContract.connect(lp6).stakeDapp('10000000000', 0);
   })
 
   it("Should mature IL protection", async function() {
@@ -422,20 +423,20 @@ describe("Liquidity mining", function() {
   it.skip("Should deplete BNT IL", async function() {
     console.log('add more liquidity1');
     // add more liquidity
-    await dappTokenContract.connect(addr1).approve(converterDappBntAddress, ethers.utils.parseEther("10000000000"));
+    await dappTokenContract.connect(addr1).approve(converterDappBntAddress, ethers.utils.parseUnits("10000000000",4));
     console.log('add more liquidity2');
     // await bntToken.connect(addr1).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
     console.log('add more liquidity3');
     await dappConverterContract.addLiquidity(
       [dappTokenContract.address, bntAddress],
-      [ethers.utils.parseEther("1000000000"), ethers.utils.parseEther("650000")],
+      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("650000")],
       '1'
     );
 
     console.log('stake');
     // stake
-    await dappTokenContract.connect(lp6).approve(dappStakingPoolContract.address, '1000000000000000000000000');
-    await dappStakingPoolContract.connect(lp6).stakeDapp('1000000000000000000000000', 0);
+    await dappTokenContract.connect(lp6).approve(dappStakingPoolContract.address, '10000000000');
+    await dappStakingPoolContract.connect(lp6).stakeDapp('10000000000', 0);
 
     console.log('simulate IL downside - conversionPath');
     // simulate IL downside
