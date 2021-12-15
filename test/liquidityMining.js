@@ -273,7 +273,10 @@ describe("Liquidity mining", function() {
 
     await dappBntTokenContract.connect(addr2).approve(dappStakingPoolContract.address, ethers.utils.parseEther("1000000"));
 
-    // await dappBntTokenContract.connect(addr1).transfer(addr2.address, ethers.utils.parseEther("10"));
+    const amt = await dappBntTokenContract.balanceOf(addr1.address)
+    console.log(amt.toString());
+    await dappBntTokenContract.connect(addr1).approve(addr2.address, ethers.utils.parseEther("10"));
+    await dappBntTokenContract.connect(addr1).transfer(addr2.address, ethers.utils.parseEther("10"));
     // await dappBntTokenContract.connect(addr1).transfer("0x8626f6940e2eb28930efb4cef49b2d1f2c9c1199", ethers.utils.parseEther("10"));
 
     // initiallize 0% for rewards
