@@ -165,10 +165,10 @@ describe("Liquidity mining", function() {
 
     await dappTokenContract.connect(addr1).approve(converterDappBntAddress, ethers.utils.parseUnits("10000000000",4));
     await bntToken.connect(addr1).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
-    //  1 DAPP ~ 0.007301 BNT
+    //  1 DAPP = 0.002419 BNT
     await dappConverterContract.addLiquidity(
       [dappTokenContract.address, bntAddress],
-      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("7300000")],
+      [ethers.utils.parseUnits("10000000",4), ethers.utils.parseEther("25000")],
       '1'
     );
 
@@ -182,7 +182,7 @@ describe("Liquidity mining", function() {
     await bntToken.connect(lp1).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
     await dappConverterContract.connect(lp1).addLiquidity(
       [dappTokenContract.address, bntAddress],
-      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("7300000")],
+      [ethers.utils.parseUnits("10000000",4), ethers.utils.parseEther("25000")],
       '1'
     );
 
@@ -195,7 +195,7 @@ describe("Liquidity mining", function() {
     await bntToken.connect(lp2).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
     await dappConverterContract.connect(lp2).addLiquidity(
       [dappTokenContract.address, bntAddress],
-      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("7300000")],
+      [ethers.utils.parseUnits("10000000",4), ethers.utils.parseEther("25000")],
       '1'
     );
 
@@ -208,7 +208,7 @@ describe("Liquidity mining", function() {
     await bntToken.connect(lp3).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
     await dappConverterContract.connect(lp3).addLiquidity(
       [dappTokenContract.address, bntAddress],
-      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("7300000")],
+      [ethers.utils.parseUnits("10000000",4), ethers.utils.parseEther("25000")],
       '1'
     );
 
@@ -221,7 +221,7 @@ describe("Liquidity mining", function() {
     await bntToken.connect(lp4).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
     await dappConverterContract.connect(lp4).addLiquidity(
       [dappTokenContract.address, bntAddress],
-      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("7300000")],
+      [ethers.utils.parseUnits("10000000",4), ethers.utils.parseEther("25000")],
       '1'
     );
 
@@ -234,7 +234,7 @@ describe("Liquidity mining", function() {
     await bntToken.connect(lp5).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
     await dappConverterContract.connect(lp5).addLiquidity(
       [dappTokenContract.address, bntAddress],
-      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("7300000")],
+      [ethers.utils.parseUnits("10000000",4), ethers.utils.parseEther("25000")],
       '1'
     );
 
@@ -247,7 +247,7 @@ describe("Liquidity mining", function() {
     await bntToken.connect(lp6).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
     await dappConverterContract.connect(lp6).addLiquidity(
       [dappTokenContract.address, bntAddress],
-      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("7300000")],
+      [ethers.utils.parseUnits("10000000",4), ethers.utils.parseEther("25000")],
       '1'
     );
     
@@ -429,7 +429,7 @@ describe("Liquidity mining", function() {
     console.log('add more liquidity3');
     await dappConverterContract.addLiquidity(
       [dappTokenContract.address, bntAddress],
-      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("7300000")],
+      [ethers.utils.parseUnits("10000000",4), ethers.utils.parseEther("25000")],
       '1'
     );
 
