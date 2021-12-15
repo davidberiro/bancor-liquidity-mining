@@ -168,7 +168,7 @@ describe("Liquidity mining", function() {
     //  1 DAPP ~ 0.007301 BNT
     await dappConverterContract.addLiquidity(
       [dappTokenContract.address, bntAddress],
-      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("650000")],
+      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("7300000")],
       '1'
     );
 
@@ -182,7 +182,7 @@ describe("Liquidity mining", function() {
     await bntToken.connect(lp1).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
     await dappConverterContract.connect(lp1).addLiquidity(
       [dappTokenContract.address, bntAddress],
-      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("650000")],
+      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("7300000")],
       '1'
     );
 
@@ -195,7 +195,7 @@ describe("Liquidity mining", function() {
     await bntToken.connect(lp2).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
     await dappConverterContract.connect(lp2).addLiquidity(
       [dappTokenContract.address, bntAddress],
-      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("650000")],
+      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("7300000")],
       '1'
     );
 
@@ -208,7 +208,7 @@ describe("Liquidity mining", function() {
     await bntToken.connect(lp3).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
     await dappConverterContract.connect(lp3).addLiquidity(
       [dappTokenContract.address, bntAddress],
-      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("650000")],
+      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("7300000")],
       '1'
     );
 
@@ -221,7 +221,7 @@ describe("Liquidity mining", function() {
     await bntToken.connect(lp4).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
     await dappConverterContract.connect(lp4).addLiquidity(
       [dappTokenContract.address, bntAddress],
-      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("650000")],
+      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("7300000")],
       '1'
     );
 
@@ -234,7 +234,7 @@ describe("Liquidity mining", function() {
     await bntToken.connect(lp5).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
     await dappConverterContract.connect(lp5).addLiquidity(
       [dappTokenContract.address, bntAddress],
-      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("650000")],
+      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("7300000")],
       '1'
     );
 
@@ -247,7 +247,7 @@ describe("Liquidity mining", function() {
     await bntToken.connect(lp6).approve(converterDappBntAddress, ethers.utils.parseEther("15000000000"));
     await dappConverterContract.connect(lp6).addLiquidity(
       [dappTokenContract.address, bntAddress],
-      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("650000")],
+      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("7300000")],
       '1'
     );
     
@@ -302,33 +302,33 @@ describe("Liquidity mining", function() {
   });
 
   it("Should allow deploy lp", async function() {
-    await dappTokenContract.connect(lp1).approve(dappStakingPoolContract.address, '9899980000');
-    await dappStakingPoolContract.connect(lp1).stakeDapp('9899980000', 0);
+    await dappTokenContract.connect(lp1).approve(dappStakingPoolContract.address, '1000000000');
+    await dappStakingPoolContract.connect(lp1).stakeDapp('1000000000', 0);
   })
 
   it("Should allow deploy lp", async function() {
-    await dappTokenContract.connect(lp2).approve(dappStakingPoolContract.address, '9899980000');
-    await dappStakingPoolContract.connect(lp2).stakeDapp('9899980000', 0);
+    await dappTokenContract.connect(lp2).approve(dappStakingPoolContract.address, '1000000000');
+    await dappStakingPoolContract.connect(lp2).stakeDapp('1000000000', 0);
   })
 
   it("Should allow deploy lp", async function() {
-    await dappTokenContract.connect(lp3).approve(dappStakingPoolContract.address, '9899980000');
-    await dappStakingPoolContract.connect(lp3).stakeDapp('9899980000', 0);
+    await dappTokenContract.connect(lp3).approve(dappStakingPoolContract.address, '1000000000');
+    await dappStakingPoolContract.connect(lp3).stakeDapp('1000000000', 0);
   })
 
   it("Should allow deploy lp", async function() {
-    await dappTokenContract.connect(lp4).approve(dappStakingPoolContract.address, '9899980000');
-    await dappStakingPoolContract.connect(lp4).stakeDapp('9899980000', 0);
+    await dappTokenContract.connect(lp4).approve(dappStakingPoolContract.address, '1000000000');
+    await dappStakingPoolContract.connect(lp4).stakeDapp('1000000000', 0);
   })
 
   it("Should allow deploy lp", async function() {
-    await dappTokenContract.connect(lp5).approve(dappStakingPoolContract.address, '9899980000');
-    await dappStakingPoolContract.connect(lp5).stakeDapp('9899980000', 0);
+    await dappTokenContract.connect(lp5).approve(dappStakingPoolContract.address, '1000000000');
+    await dappStakingPoolContract.connect(lp5).stakeDapp('1000000000', 0);
   })
 
   it("Should allow deploy lp", async function() {
-    await dappTokenContract.connect(lp6).approve(dappStakingPoolContract.address, '10000000000');
-    await dappStakingPoolContract.connect(lp6).stakeDapp('10000000000', 0);
+    await dappTokenContract.connect(lp6).approve(dappStakingPoolContract.address, '1000000000');
+    await dappStakingPoolContract.connect(lp6).stakeDapp('1000000000', 0);
   })
 
   it("Should mature IL protection", async function() {
@@ -429,7 +429,7 @@ describe("Liquidity mining", function() {
     console.log('add more liquidity3');
     await dappConverterContract.addLiquidity(
       [dappTokenContract.address, bntAddress],
-      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("650000")],
+      [ethers.utils.parseUnits("1000000000",4), ethers.utils.parseEther("7300000")],
       '1'
     );
 
