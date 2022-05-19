@@ -1,14 +1,15 @@
-const Web3 = require("web3");
+import { upgrades } from "hardhat";
+import Web3 from "web3";
 const { expect } = require("chai");
 const { network, ethers } = require("hardhat");
 const { BigNumber } = require("ethers");
 
-const liquidityProtectionSettingsAbi = require('../abi/ILiquidityProtectionSettings.json');
-const liquidityProtectionAbi = require('../abi/ILiquidityProtection.json');
-const converterRegistryDataAbi = require('../abi/IConverterRegistryData.json');
-const bancorNetworkAbi = require('../abi/IBancorNetwork.json');
-const converterAbi = require('../abi/ILiquidityPoolConverter.json');
-const erc20Abi = require('../abi/IERC20Upgradeable.json');
+const liquidityProtectionSettingsAbi = require('../artifacts/contracts/interfaces/ILiquidityProtectionSettings.sol/ILiquidityProtectionSettings.json');
+const liquidityProtectionAbi = require('../artifacts/contracts/interfaces/ILiquidityProtection.sol/ILiquidityProtection.json');
+const converterRegistryDataAbi = require('../artifacts/contracts/interfaces/IConverterRegistryData.sol/IConverterRegistryData.json')
+const bancorNetworkAbi = require('../artifacts/contracts/interfaces/IBancorNetwork.sol/IBancorNetwork.json');
+const converterAbi = require('../artifacts/contracts/interfaces/ILiquidityPoolConverter.sol/ILiquidityPoolConverter.json');
+const erc20Abi = require('../artifacts/contracts/interfaces/IERC20Upgradeable.sol/IERC20Upgradeable.json');
 
 const liquidityProtectionSettingsAdminAddress = "0xdfeE8DC240c6CadC2c7f7f9c257c259914dEa84E";
 const liquidityProtectionSettingsContractAddress = "0xF7D28FaA1FE9Ea53279fE6e3Cde75175859bdF46";
@@ -38,10 +39,10 @@ describe("Liquidity mining", function() {
   let liquidityProtectionContract;
   let funderContract;
   let liquidityProtectionSettingsContract;
-  let owner, addr1, addr2, addr3, addr4, addr5, addr6, addr7, addr8, addrs;
+  let owner, addr1, addr2, addr3, addr4, addr5, addr6, addr7, addr8, bancorNetworkContract, addrs;
 
   before(async function() {
-    [owner, addr1, addr2, addr3, addr4, addr5, addr6, addr7, addr8, bancorNetworkContract, ...addrs] = await ethers.getSigners();
+    [owner, addr1, addr2, addr3, addr4, addr5, addr6, addr7, addr8, ...addrs] = await ethers.getSigners();
 
     // impersonate account w/ permissions to approve converters
     await network.provider.request({
@@ -203,11 +204,11 @@ describe("Liquidity mining", function() {
     // simulate IL converting 25% of BNT LP depth to DAPP
     // 1684 BNT 0.259% causes ERR_INVALID_RATE, solution wait 10m
     await bntTokenContract.connect(addr1).approve(bancorNetworkContract.address, ethers.utils.parseEther("162500"));
-    conversionPath = await bancorNetworkContract.conversionPath(
+    const conversionPath = await bancorNetworkContract.conversionPath(
       bntAddress,
       dappTokenContract.address
     );
-    rateByPath = await bancorNetworkContract.rateByPath(
+    const rateByPath = await bancorNetworkContract.rateByPath(
       conversionPath,
       ethers.utils.parseEther("162500")
     );
@@ -504,11 +505,11 @@ describe("Liquidity mining", function() {
 
     // simulate IL
     await bntTokenContract.connect(addr1).approve(bancorNetworkContract.address, '65400008911974684310');
-    conversionPath = await bancorNetworkContract.conversionPath(
+    const conversionPath = await bancorNetworkContract.conversionPath(
       bntAddress,
       dappTokenContract.address
     );
-    rateByPath = await bancorNetworkContract.rateByPath(
+    const rateByPath = await bancorNetworkContract.rateByPath(
       conversionPath,
       '65400008911974684310'
     );
@@ -550,8 +551,8 @@ describe("Liquidity mining", function() {
     await dappStakingPoolContract.connect(user).stakeDapp(ethers.utils.parseEther("1"), 6);
 
     // advance time
-    nowBlock = await ethers.provider.getBlockNumber();
-    timestamp = (await ethers.provider.getBlock(nowBlock)).timestamp;
+    const nowBlock = await ethers.provider.getBlockNumber();
+    const timestamp = (await ethers.provider.getBlock(nowBlock)).timestamp;
     await ethers.provider.send("evm_mine", [ timestamp + 1000 ]);
 
     await dappStakingPoolContract.connect(user).unstakeDapp(6);
