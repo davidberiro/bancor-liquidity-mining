@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: MIT
+
 pragma solidity 0.8.13;
+
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
@@ -16,7 +18,7 @@ contract Funder is OwnableUpgradeable {
     address _stakingContract,
     address _dappTokenContract,
     uint256 _rewardsPercentage // out of 10000
-  ) external {
+  ) external initializer {
     __Ownable_init();
     stakingContract = _stakingContract;
     dappTokenContract = IERC20(_dappTokenContract);

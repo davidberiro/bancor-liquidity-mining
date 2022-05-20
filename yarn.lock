@@ -2,6 +2,11 @@
 # yarn lockfile v1
 
 
+"@colors/colors@1.5.0":
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/@colors/colors/-/colors-1.5.0.tgz#bb504579c1cae923e6576a4f5da43d25f97bdbd9"
+  integrity sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==
+
 "@cspotcode/source-map-consumer@0.8.0":
   version "0.8.0"
   resolved "https://registry.yarnpkg.com/@cspotcode/source-map-consumer/-/source-map-consumer-0.8.0.tgz#33bf4b7b39c178821606f669bbc447a6a629786b"
@@ -2305,7 +2310,7 @@ chalk@^2.4.1, chalk@^2.4.2:
     escape-string-regexp "^1.0.5"
     supports-color "^5.3.0"
 
-chalk@^4.1.0, chalk@^4.1.2:
+chalk@^4.0.0, chalk@^4.1.0, chalk@^4.1.2:
   version "4.1.2"
   resolved "https://registry.yarnpkg.com/chalk/-/chalk-4.1.2.tgz#aac4e2b7734a740867aeb16bf02aad556a1e7a01"
   integrity sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==
@@ -2418,6 +2423,15 @@ cli-table3@^0.5.0:
     string-width "^2.1.1"
   optionalDependencies:
     colors "^1.1.2"
+
+cli-table3@^0.6.0:
+  version "0.6.2"
+  resolved "https://registry.yarnpkg.com/cli-table3/-/cli-table3-0.6.2.tgz#aaf5df9d8b5bf12634dc8b3040806a0c07120d2a"
+  integrity sha512-QyavHCaIC80cMivimWu4aWHilIpiDpfm3hGmqAmXVL1UsnbLuBSMd21hTX6VY4ZSDSM73ESLeF8TOYId3rBTbw==
+  dependencies:
+    string-width "^4.2.0"
+  optionalDependencies:
+    "@colors/colors" "1.5.0"
 
 cliui@^3.2.0:
   version "3.2.0"
@@ -4440,6 +4454,14 @@ hardhat-abi-exporter@^2.2.1:
     "@ethersproject/abi" "^5.5.0"
     delete-empty "^3.0.0"
 
+hardhat-contract-sizer@2.5.1:
+  version "2.5.1"
+  resolved "https://registry.yarnpkg.com/hardhat-contract-sizer/-/hardhat-contract-sizer-2.5.1.tgz#cb0b8dd32593b7a28c8d96ecde04841292bbd603"
+  integrity sha512-28yRb73e30aBVaZOOHTlHZFIdIasA/iFunIehrUviIJTubvdQjtSiQUo2wexHFtt71mQeMPP8qjw2sdbgatDnQ==
+  dependencies:
+    chalk "^4.0.0"
+    cli-table3 "^0.6.0"
+
 hardhat-deploy@^0.9.24:
   version "0.9.29"
   resolved "https://registry.yarnpkg.com/hardhat-deploy/-/hardhat-deploy-0.9.29.tgz#b1177d4f3077f335ad3f50c55825d9417ec75968"
@@ -4468,7 +4490,7 @@ hardhat-deploy@^0.9.24:
     murmur-128 "^0.2.1"
     qs "^6.9.4"
 
-hardhat-gas-reporter@^1.0.4:
+hardhat-gas-reporter@1.0.8:
   version "1.0.8"
   resolved "https://registry.yarnpkg.com/hardhat-gas-reporter/-/hardhat-gas-reporter-1.0.8.tgz#93ce271358cd748d9c4185dbb9d1d5525ec145e0"
   integrity sha512-1G5thPnnhcwLHsFnl759f2tgElvuwdkzxlI65fC9PwxYMEe9cmjkVAAWTf3/3y8uP6ZSPiUiOW8PgZnykmZe0g==

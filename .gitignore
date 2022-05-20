@@ -8,3 +8,4 @@ abi
 .config.json
 unknown*
 rinkeby.json
+typechain-types
