@@ -2,7 +2,6 @@ import { upgrades } from "hardhat";
 import Web3 from "web3";
 const { expect } = require("chai");
 const { network, ethers } = require("hardhat");
-const { BigNumber } = require("ethers");
 
 const liquidityProtectionSettingsAbi = require("../artifacts/contracts/interfaces/ILiquidityProtectionSettings.sol/ILiquidityProtectionSettings.json");
 const liquidityProtectionAbi = require("../artifacts/contracts/interfaces/ILiquidityProtection.sol/ILiquidityProtection.json");
@@ -56,10 +55,21 @@ describe("Liquidity mining", function () {
     bancorNetworkContract,
     addrs;
 
-  before(async function () {
+  before(async () => {
     [owner, addr1, addr2, addr3, addr4, addr5, addr6, addr7, addr8, ...addrs] =
       await ethers.getSigners();
 
+    console.log({
+      owner: owner.address,
+      addr1: addr1.address,
+      addr2: addr2.address,
+      addr3: addr3.address,
+      addr4: addr4.address,
+      addr5: addr5.address,
+      addr6: addr6.address,
+      addr7: addr7.address,
+      addr8: addr8.address,
+    });
     // impersonate account w/ permissions to approve converters
     await network.provider.request({
       method: "hardhat_impersonateAccount",
@@ -209,7 +219,6 @@ describe("Liquidity mining", function () {
     );
 
     const blockNumber = await ethers.provider.getBlockNumber();
-
     dappStakingPoolContract = await upgrades.deployProxy(
       dappStakingPoolFactory,
       [
@@ -270,13 +279,21 @@ describe("Liquidity mining", function () {
       dappTokenContract.address,
       0,
     ]);
+
+    console.log(
+      `proxy funder address: ${
+        funderContract.address
+      }\nfunder address: ${await upgrades.erc1967.getImplementationAddress(
+        funderContract.address
+      )}`
+    );
     await dappTokenContract.mint(
       funderContract.address,
       ethers.utils.parseEther("1000000")
     );
   });
 
-  it("Should allow admin to add pool", async function () {
+  it("Should allow admin to add pool", async () => {
     await dappStakingPoolContract.add("2000", "100");
     const poolInfo = await dappStakingPoolContract.poolInfo(6);
     expect(poolInfo.allocPoint.toString()).to.equal("2000");
@@ -285,11 +302,11 @@ describe("Liquidity mining", function () {
     expect(poolInfo.totalLpStaked.toString()).to.equal("0");
   });
 
-  it("Should allow whitelist pool", async function () {
+  it("Should allow whitelist pool", async () => {
     await liquidityProtectionSettingsContract.addPoolToWhitelist(dappBntAnchor);
   });
 
-  it("Should allow claim BNT IL", async function () {
+  it("Should allow claim BNT IL", async () => {
     let user = addr7;
 
     // confirm total DAPP staked for pool is 0, set pre balance
@@ -348,7 +365,7 @@ describe("Liquidity mining", function () {
     expect(postBal).to.be.above(preBal);
   });
 
-  it("Should allow funding dapp rewards and IL", async function () {
+  it("Should allow funding dapp rewards and IL", async () => {
     const prevDappSupply = await dappTokenContract.balanceOf(
       dappStakingPoolContract.address
     );
@@ -401,7 +418,7 @@ describe("Liquidity mining", function () {
     );
   });
 
-  it("Should update funder contract 44.45% rewards 55.55% IL", async function () {
+  it("Should update funder contract 44.45% rewards 55.55% IL", async () => {
     const numerator = 4445;
     const denominator = 10000;
     const prevDappILSupply = await dappStakingPoolContract.dappILSupply();
@@ -425,7 +442,7 @@ describe("Liquidity mining", function () {
     ).to.equal(1000000000000000000000000 * (numerator / denominator));
   });
 
-  it("Should update funder contract 100% rewards 0% IL", async function () {
+  it("Should update funder contract 100% rewards 0% IL", async () => {
     const numerator = 10000;
     const denominator = 10000;
     const prevDappILSupply = await dappStakingPoolContract.dappILSupply();
@@ -449,7 +466,7 @@ describe("Liquidity mining", function () {
     ).to.equal(1000000000000000000000000 * (numerator / denominator));
   });
 
-  it("Should allow transfer position after full unstake", async function () {
+  it("Should allow transfer position after full unstake", async () => {
     let user = addr5;
     let userInfo;
     const prevPoolEntries = await dappStakingPoolContract.userPoolTotalEntries(
@@ -544,7 +561,7 @@ describe("Liquidity mining", function () {
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
   });
 
-  it("Should allow staking one sided dapp", async function () {
+  it("Should allow staking one sided dapp", async () => {
     let user = addr2;
     let userInfo;
     userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
@@ -560,7 +577,7 @@ describe("Liquidity mining", function () {
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
   });
 
-  it("Should allow staking one sided dapp again", async function () {
+  it("Should allow staking one sided dapp again", async () => {
     let user = addr2;
     let userInfo;
     userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
@@ -581,7 +598,7 @@ describe("Liquidity mining", function () {
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
   });
 
-  it("Should allow staking DAPP-BNT LP", async function () {
+  it("Should allow staking DAPP-BNT LP", async () => {
     let user = addr2;
     let userInfo;
     userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
@@ -597,7 +614,7 @@ describe("Liquidity mining", function () {
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("1"));
   });
 
-  it("Should allow transferring positions, notifying, and withdrawing", async function () {
+  it("Should allow transferring positions, notifying, and withdrawing", async () => {
     let user = addr3;
     let userInfo;
     userInfo = await dappStakingPoolContract.userPoolInfo(0, user.address);
@@ -650,7 +667,7 @@ describe("Liquidity mining", function () {
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
   });
 
-  it("Should allow users to claim rewards", async function () {
+  it("Should allow users to claim rewards", async () => {
     let user = addr4;
     let userInfo;
     await dappTokenContract
@@ -678,7 +695,7 @@ describe("Liquidity mining", function () {
     );
   });
 
-  it("Should allow staking to timelocked pool", async function () {
+  it("Should allow staking to timelocked pool", async () => {
     let user = addr2;
     let userInfo;
     userInfo = await dappStakingPoolContract.userPoolInfo(6, user.address);
@@ -697,7 +714,7 @@ describe("Liquidity mining", function () {
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
   });
 
-  it("Should not allow user to unstake early from timelocked pool", async function () {
+  it("Should not allow user to unstake early from timelocked pool", async () => {
     let user = addr2;
     let failed = false;
     try {
@@ -708,7 +725,7 @@ describe("Liquidity mining", function () {
     expect(failed).to.be.true;
   });
 
-  it("Should allow user to unstake from timelocked pool after enough time", async function () {
+  it("Should allow user to unstake from timelocked pool after enough time", async () => {
     let user = addr2;
     let userInfo;
     // advance time
@@ -722,7 +739,7 @@ describe("Liquidity mining", function () {
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
   });
 
-  it("Should allow increase/decrease pool entries double sided stake", async function () {
+  it("Should allow increase/decrease pool entries double sided stake", async () => {
     let user = addr2;
     let userInfo;
     await dappStakingPoolContract
@@ -744,14 +761,14 @@ describe("Liquidity mining", function () {
     expect(userInfo.lpAmount).to.equal(ethers.utils.parseEther("0"));
   });
 
-  it("Should allow call getPendingRewards for frontend", async function () {
+  it("Should allow call getPendingRewards for frontend", async () => {
     let user = addr2;
     await dappStakingPoolContract
       .connect(user)
       .getPendingRewards(6, user.address);
   });
 
-  it("Should burn pending BNT IL", async function () {
+  it("Should burn pending BNT IL", async () => {
     let user = addr1;
 
     // approve and stake
@@ -800,7 +817,7 @@ describe("Liquidity mining", function () {
     expect(preBal).to.be.above(postBal);
   });
 
-  it("Should allow user to unstake DAPP and DAPP-BNT LP from timelocked pool", async function () {
+  it("Should allow user to unstake DAPP and DAPP-BNT LP from timelocked pool", async () => {
     let user = addr6;
     let userInfo;
     const prevPoolEntries = await dappStakingPoolContract.userPoolTotalEntries(
@@ -838,7 +855,7 @@ describe("Liquidity mining", function () {
     expect(postPoolEntries.sub(postUnstakePoolEntries)).to.equal(1);
   });
 
-  it("Should allow update pool & funder owner to gnosis safe", async function () {
+  it("Should allow update pool & funder owner to gnosis safe", async () => {
     await dappStakingPoolContract.transferOwnership(gnosisSafe);
     await funderContract.transferOwnership(gnosisSafe);
     const postOwnerPool = await dappStakingPoolContract.owner();
@@ -847,7 +864,8 @@ describe("Liquidity mining", function () {
     expect(postOwnerFunder).to.equal(gnosisSafe);
   });
 
-  it("Should allow update proxy admin to gnosis safe", async function () {
-    await upgrades.admin.transferProxyAdminOwnership(gnosisSafe);
+  it("Should allow update proxy admin to gnosis safe", async () => {
+    const adminInstance = await upgrades.admin.getInstance();
+    await adminInstance.connect(addr1).transferOwnership(gnosisSafe);
   });
 });

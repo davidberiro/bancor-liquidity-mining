@@ -1,11 +1,13 @@
-import { HardhatUserConfig, task  } from "hardhat/config";
+import { HardhatUserConfig } from "hardhat/types";
+import "@nomiclabs/hardhat-ethers";
 import "@nomiclabs/hardhat-waffle";
 import "solidity-coverage";
 import "@nomiclabs/hardhat-etherscan";
 import "hardhat-deploy";
 import "@openzeppelin/hardhat-upgrades";
-import config from "./tsconfig.json";
-// import { HardhatUserConfig, task } from "hardhat/config";
+import "hardhat-gas-reporter";
+import "hardhat-contract-sizer";
+import config from "./.config.json";
 
 import "./src/tasks/transferOwnership";
 
@@ -16,7 +18,7 @@ const hardhatConfig: HardhatUserConfig = {
   solidity: {
     compilers: [
       {
-        version: "0.8.2",
+        version: "0.8.13",
         settings: {
           optimizer: {
             enabled: true,
@@ -35,16 +37,19 @@ const hardhatConfig: HardhatUserConfig = {
   },
   networks: {
     hardhat: {
-      // forking: {
-      //   blockNumber: 12786615,
-      //   url: "https://eth-mainnet.alchemyapi.io/v2/1r11J-NozgHAJb8ndBuHoZJsNVJBwORW",
-      // },
+      forking: {
+        blockNumber: 12786615,
+        url:
+          process.env.MAINNET_RPC_ENDPOINT ||
+          `https://eth-mainnet.alchemyapi.io/v2/${config.alchemyKey}`,
+      },
       blockGasLimit: 12e6,
     },
     rinkeby: {
-      url: "https://eth-rinkeby.alchemyapi.io/v2/1r11J-NozgHAJb8ndBuHoZJsNVJBwORW",
-      // url: `https://eth-rinkeby.alchemyapi.io/v2/${config.alchemyKey}`,
-      //accounts: config.keys ?? [""],
+      url:
+        process.env.RINKEBY_RPC_ENDPOINT ||
+        `https://eth-rinkeby.alchemyapi.io/v2/${config.alchemyKey}`,
+      accounts: config.keys ?? [""],
       blockGasLimit: 12e6,
     },
   },
@@ -56,7 +61,10 @@ const hardhatConfig: HardhatUserConfig = {
   etherscan: {
     // Your API key for Etherscan
     // Obtain one at https://etherscan.io/
-    apiKey: process.env.ETHERSCAN_API_KEY,
+    apiKey: config.etherscanApiKey,
+  },
+  gasReporter: {
+    enabled: true,
   },
 };
 
