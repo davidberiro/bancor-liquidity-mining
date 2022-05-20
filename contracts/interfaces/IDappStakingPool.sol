@@ -1,9 +1,9 @@
-// SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity ^0.6.12;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.13;
 
 /*
     Staking Pool Interface
 */
 interface IDappStakingPool {
-    function fund(uint dappRewardsAmount, uint dappILAmount) external;
+  function fund(uint256 dappRewardsAmount, uint256 dappILAmount) external;
 }

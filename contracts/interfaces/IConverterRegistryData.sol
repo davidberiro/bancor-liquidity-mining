@@ -1,9 +1,12 @@
-// SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity ^0.6.12;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.13;
 
 /*
     Converter Registry Data interface
 */
 interface IConverterRegistryData {
-    function getConvertibleTokenSmartTokens(address _convertibleToken) external view returns (address[] memory);
+  function getConvertibleTokenSmartTokens(address _convertibleToken)
+    external
+    view
+    returns (address[] memory);
 }
