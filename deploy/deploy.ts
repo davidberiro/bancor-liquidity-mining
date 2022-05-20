@@ -63,7 +63,25 @@ const func: DeployFunction = async (
       viaAdminContract: "DappStakingPoolProxyAdmin",
     },
   });
-  console.log(`Done!!!`);
+
+  const dappStakingDeployment = await hre.deployments.get("DappStakingPool");
+  const dappStakingPoolAddress = dappStakingDeployment.address;
+
+  // Deploy Funder Contract
+  await hre.deployments.deploy("Funder", {
+    from: deployer,
+    log: true,
+    proxy: {
+      proxyContract: "OpenZeppelinTransparentProxy",
+      execute: {
+        init: {
+          methodName: "initialize",
+          args: [dappStakingPoolAddress, dappToken, 0],
+        },
+      },
+      viaAdminContract: "FunderProxyAdmin",
+    },
+  });
 };
 
 export default func;
